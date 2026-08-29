@@ -1,6 +1,8 @@
-# VIX Futures Volatility Study
+# Estudio de volatilidad | Ingeniería Financiera UCEMA
 
 This project studies volatility through the historical VIX futures term structure. It provides a FastAPI service that extracts data for the first two VIX futures continuation contracts through the LSEG Data Library for Python.
+
+Trabajo académico de Ingeniería Financiera de UCEMA. Responsables: Alejandro Navarini y Tomas Perez.
 
 The primary data set supports research on:
 
@@ -224,7 +226,7 @@ It creates `.venv` and installs the project automatically when needed. No fronte
 
 The API and dashboard listen on `http://127.0.0.1:8000` by default. Open the dashboard at `http://127.0.0.1:8000`. Set `API_HOST` or `API_PORT` in the environment to change the bind address.
 
-The Signal Desk dashboard can fetch historical data for multiple tickers, browse every CSV in `DATA_DIR`, download the original files, inspect paginated rows, and graph any detected numeric column. Press `Ctrl-C` in the `make run` terminal to stop the service.
+El dashboard de Ingeniería Financiera puede consultar datos históricos para varios tickers, explorar todos los CSV de `DATA_DIR`, descargar los archivos originales, inspeccionar filas paginadas y graficar cualquier columna numérica detectada. Presioná `Ctrl-C` en la terminal de `make run` para detener el servicio.
 
 The interactive API documentation is available at `http://127.0.0.1:8000/docs`. Check the service without contacting LSEG:
 
