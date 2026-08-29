@@ -1,16 +1,35 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Sequence
+from urllib.error import URLError
+from urllib.request import urlopen
 
 import lseg.data as ld
 from dotenv import load_dotenv
 
 
 load_dotenv()
+
+
+def find_workspace_proxy_port() -> int:
+    for port in range(9000, 9061):
+        try:
+            with urlopen(f'http://127.0.0.1:{port}/api/status', timeout=0.25) as response:
+                status = json.load(response)
+                if status.get('statusCode') == 'ST_PROXY_READY':
+                    return port
+        except (OSError, URLError, TimeoutError, json.JSONDecodeError):
+            continue
+
+    raise RuntimeError(
+        'Workspace Desktop Data API proxy is not ready on ports 9000 through 9060'
+    )
 
 
 def split_values(value: str) -> list[str]:
@@ -29,14 +48,18 @@ def fetch_data(
     interval: str = '1D',
 ) -> int:
     session = ld.session.desktop.Definition(app_key=app_key).get_session()
+    session.set_port_number(find_workspace_proxy_port())
 
     session.open()
     try:
         ld.session.set_default(session)
+        instrument_list = list(instruments)
+        if len(instrument_list) == 1 and instrument_list[0].startswith('0#'):
+            instrument_list = list(ld.discovery.Chain(instrument_list[0]).constituents)
 
         if mode == 'history':
             data = ld.get_history(
-                universe=list(instruments),
+                universe=instrument_list,
                 fields=list(fields),
                 interval=interval,
                 start=start,
@@ -44,7 +67,7 @@ def fetch_data(
             )
         else:
             response = ld.content.pricing.Definition(
-                universe=list(instruments),
+                universe=instrument_list,
                 fields=list(fields),
             ).get_data(session=session)
             data = response.data.df
@@ -53,7 +76,12 @@ def fetch_data(
         data.to_csv(output)
         return len(data)
     finally:
-        session.close()
+        request_failed = sys.exc_info()[0] is not None
+        try:
+            session.close()
+        except Exception:
+            if not request_failed:
+                raise
 
 
 def build_parser() -> argparse.ArgumentParser:

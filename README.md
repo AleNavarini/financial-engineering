@@ -3,6 +3,8 @@
 This project extracts financial data from Refinitiv Workspace through the LSEG Data Library for Python.
 It supports the Workspace Desktop environment on macOS and Windows only.
 
+Project guides and learning material are available in the [documentation index](docs/README.md).
+
 Refinitiv Workspace is now branded as **LSEG Workspace**. The names refer to the same desktop product used by this project.
 
 ## How It Works
@@ -53,7 +55,7 @@ Workspace must remain open and signed in while `fetch_data.py` runs.
 
 ## 2. Select or Create the App Key
 
-The App Key identifies this application. It is not the same as your Workspace password. The key must be registered for the **EDP API** (Enterprise Data Platform API), because this project uses the LSEG Data Library API.
+The App Key identifies this application. It is not the same as your Workspace password. For this desktop-based project, register the key for both **Eikon Data API** and **EDP API**. The desktop proxy validates the Eikon or Workspace API registration, while LSEG pricing resources require EDP scopes.
 
 ### Use an Existing UCEMA App Key
 
@@ -61,7 +63,7 @@ The UCEMA account already has several App Keys. Use one of the existing keys ins
 
 1. Open the AppKey Generator.
 2. Review the keys already registered for the UCEMA account.
-3. Select a key registered for **EDP API**.
+3. Select a key registered for both **Eikon Data API** and **EDP API**.
 4. Copy its **API Key** value.
 5. Set that value as `LSEG_APP_KEY` in `.env`.
 
@@ -72,7 +74,7 @@ If no existing key is suitable, create a new one:
 1. Open the [LSEG API Docs](https://apidocs.refinitiv.com/Apps/ApiDocs).
 2. Open **AppKey Generator**.
 3. Enter a unique application name.
-4. Select **EDP API**.
+4. Select both **Eikon Data API** and **EDP API**.
 5. Click **Register New App**.
 6. Copy the generated **API Key**. This is the App Key used by this project.
 
@@ -181,23 +183,37 @@ This installs:
 
 ## 6. Configure the Fetch Script
 
-Open `fetch_data.py`. The settings are constants at the top of the file:
+Open `fetch_data.py`. The settings are constants at the top of the file. The default configuration extracts three years of daily history for the first nine VIX futures continuation contracts, not the VIX spot index:
 
 ```python
-INSTRUMENTS = ['BTC=']
-FIELDS = ['BID', 'ASK']
-START_DATE = (date.today() - timedelta(days=30)).isoformat()
-END_DATE = date.today().isoformat()
-OUTPUT = Path('data/refinitiv_data.csv')
+MODE = 'history'
+INSTRUMENTS = [f'VXc{month}' for month in range(1, 10)]
+FIELDS = [
+    'TRDPRC_1',
+    'SETTLE',
+    'OPINT_1',
+]
+END_DATE = date.today()
+try:
+    START_DATE = END_DATE.replace(year=END_DATE.year - 3).isoformat()
+except ValueError:
+    START_DATE = END_DATE.replace(year=END_DATE.year - 3, day=28).isoformat()
+END_DATE = END_DATE.isoformat()
+OUTPUT = Path('data/vix_futures_3y.csv')
 ```
 
-Change these constants when you need different data:
+Change these constants in Python when you need different data:
 
-- `INSTRUMENTS`: LSEG RICs such as `AAPL.O`, `MSFT.O`, or `BTC=`
-- `FIELDS`: fields such as `BID`, `ASK`, or `TRDPRC_1`
+- `MODE`: `snapshot` for current data or `history` for daily history
+- `INSTRUMENTS`: LSEG RICs such as `VXc1` through `VXc9`, or the current chain `0#VX:` for snapshot mode
+- `FIELDS`: fields such as `EXPIR_DATE`, `BID`, `ASK`, `SETTLE`, `ACVOL_1`, and `OPINT_1`
 - `START_DATE`: first date to request
 - `END_DATE`: last date to request
 - `OUTPUT`: CSV output path
+
+Continuation RICs keep a stable maturity position: `VXc1` is the nearest contract, `VXc2` is the second nearest, and so on. The contract behind each column changes when contracts expire.
+
+The script automatically finds the Workspace Desktop Data API proxy on ports `9000` through `9060`. No proxy port configuration is required.
 
 ## 7. Run the Script
 
@@ -220,7 +236,7 @@ python fetch_data.py
 The script fetches data and writes the result to:
 
 ```text
-data/refinitiv_data.csv
+data/vix_futures_3y.csv
 ```
 
 The `data/` directory and generated CSV files are ignored by Git.
@@ -240,10 +256,11 @@ Confirm that:
 3. Workspace displays current market data.
 4. VPN, firewall, or proxy settings are not blocking LSEG services.
 
-On macOS, Workspace's local API status can be checked with:
+On macOS, check the port used by Workspace and then request its status. Workspace starts at port `9000` and can select a later port when another process already uses it:
 
 ```bash
-curl http://127.0.0.1:9000/api/status
+lsof -nP -iTCP -sTCP:LISTEN | grep Refinitiv
+curl http://127.0.0.1:9002/api/status
 ```
 
 An available proxy returns a response containing `ST_PROXY_READY`.
