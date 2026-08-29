@@ -20,7 +20,7 @@ $(INSTALL_MARKER): pyproject.toml
 	$(PYTHON_BIN) -c "from pathlib import Path; Path('$(INSTALL_MARKER)').touch()"
 
 run: $(INSTALL_MARKER)
-	$(PYTHON_BIN) -m financial_engineering.api
+	$(PYTHON_BIN) -m financial_engineering.app
 
 test: $(INSTALL_MARKER)
 	$(PYTHON_BIN) -m unittest discover -s tests -v

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from financial_engineering.refinitiv_extract import fetch_data
+from financial_engineering.infrastructure.lseg_client import LsegClient
 
 
 MODE = 'history'
@@ -29,8 +29,7 @@ def main() -> None:
     if not app_key:
         raise RuntimeError('Set LSEG_APP_KEY in .env')
 
-    row_count = fetch_data(
-        app_key=app_key,
+    row_count = LsegClient(app_key).fetch_data(
         mode=MODE,
         instruments=INSTRUMENTS,
         fields=FIELDS,

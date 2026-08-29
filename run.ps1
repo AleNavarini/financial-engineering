@@ -28,4 +28,4 @@ if ($needsInstall) {
     New-Item -ItemType File -Force -Path $marker | Out-Null
 }
 
-& $venvPython -m financial_engineering.api
+& $venvPython -m financial_engineering.app

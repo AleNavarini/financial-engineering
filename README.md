@@ -230,12 +230,12 @@ The interactive API documentation is available at `http://127.0.0.1:8000/docs`. 
 curl http://127.0.0.1:8000/health
 ```
 
-Request the default three-year history:
+Request historical data with an explicit ticker and date range:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/data \
+curl -X POST http://127.0.0.1:8000/history \
   -H 'Content-Type: application/json' \
-  -d '{"mode":"history"}'
+  -d '{"ticker":"VXc1","start":"2024-01-01","end":"2024-12-31"}'
 ```
 
 Request a current observation for selected instruments:
@@ -243,10 +243,38 @@ Request a current observation for selected instruments:
 ```bash
 curl -X POST http://127.0.0.1:8000/data \
   -H 'Content-Type: application/json' \
-  -d '{"mode":"snapshot","instruments":["VXc1","VXc2"]}'
+  -d '{"instruments":["VXc1","VXc2"]}'
 ```
 
-The API writes each fetch to `data/data_<instruments>.csv` and returns the path in `output_file`, along with `mode`, `instruments`, `fields`, `row_count`, and a JSON `data` array. For example, `VX` writes `data/data_VX.csv`, while `BIGS` and `VXc1` write `data/data_BIGS_VXc1.csv`. The original CSV utility remains available in `fetch_data.py` when a custom fixed output path is required.
+The API has separate controllers for historical and current data:
+
+- `POST /history` accepts one `ticker` or an `instruments` list, plus required `start` and `end` dates.
+- `POST /data` accepts one `ticker` or an `instruments` list for a current snapshot. It does not accept history dates.
+
+Each historical fetch writes the date range into its filename, for example `data/data_VXc1_2024-01-01_to_2024-12-31.csv`. A request for `BIGS` and `VXc1` writes a separate file such as `data/data_BIGS_VXc1_2024-01-01_to_2024-12-31.csv`. Both responses include the resolved `ticker`, `instruments`, `start`, `end`, and `output_file` values.
+
+The same use cases are available as Python CLI commands:
+
+```bash
+financial-engineering-history \
+  --ticker VXc1 \
+  --start 2024-01-01 \
+  --end 2024-12-31
+
+financial-engineering-data --ticker VXc1
+```
+
+The equivalent module commands are:
+
+```bash
+python -m financial_engineering.application.use_cases.get_history.get_history_controller \
+  --ticker VXc1 \
+  --start 2024-01-01 \
+  --end 2024-12-31
+
+python -m financial_engineering.application.use_cases.get_data.get_data_controller \
+  --ticker VXc1
+```
 
 ## 7. Configure the Fetch Script
 

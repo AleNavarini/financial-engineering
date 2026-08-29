@@ -15,8 +15,9 @@ dependencies = [
 ]
 
 [project.scripts]
-financial-engineering-api = 'financial_engineering.api:main'
-refinitiv-extract = 'financial_engineering.refinitiv_extract:main'
+financial-engineering-api = 'financial_engineering.app:main'
+financial-engineering-data = 'financial_engineering.application.use_cases.get_data.get_data_controller:main'
+financial-engineering-history = 'financial_engineering.application.use_cases.get_history.get_history_controller:main'
 
 [tool.setuptools.packages.find]
 where = ['src']
