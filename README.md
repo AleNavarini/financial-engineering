@@ -22,6 +22,17 @@ cp .env.example .env
 
 Set `LSEG_APP_KEY` in `.env`. `LSEG_USERNAME` and `LSEG_PASSWORD` are only required for a platform session.
 
+## Simple Run
+
+Open and sign in to LSEG Workspace, then run:
+
+```bash
+source .venv/bin/activate
+python3 fetch_data.py
+```
+
+The script fetches the last 30 days of `BTC=` bid and ask history into `data/refinitiv_data.csv`. Edit the constants at the top of `fetch_data.py` to change the instruments, fields, dates, or output file.
+
 ## Snapshot Data
 
 The default desktop session uses the signed-in Workspace application:
