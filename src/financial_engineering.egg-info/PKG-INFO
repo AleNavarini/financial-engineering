@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: financial-engineering
-Version: 0.1.0
-Summary: Financial data extraction tools for LSEG Data Platform
-Requires-Python: >=3.11
-Requires-Dist: lseg-data>=1.0.0
-Requires-Dist: python-dotenv>=1.0.0

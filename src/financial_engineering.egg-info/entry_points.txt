@@ -1,2 +1,0 @@
-[console_scripts]
-refinitiv-extract = financial_engineering.refinitiv_extract:main
