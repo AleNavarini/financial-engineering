@@ -36,13 +36,13 @@ def split_values(value: str) -> list[str]:
     return [item.strip() for item in value.split(',') if item.strip()]
 
 
-def fetch_data(
+def extract_data(
     *,
     app_key: str,
     mode: str,
     instruments: Sequence[str],
     fields: Sequence[str],
-    output: Path,
+    output: Path | None = None,
     start: str | None = None,
     end: str | None = None,
     interval: str = '1D',
@@ -71,9 +71,10 @@ def fetch_data(
                 fields=list(fields),
             )
 
-        output.parent.mkdir(parents=True, exist_ok=True)
-        data.to_csv(output)
-        return len(data)
+        if output is not None:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            data.to_csv(output)
+        return data
     finally:
         request_failed = sys.exc_info()[0] is not None
         try:
@@ -81,6 +82,30 @@ def fetch_data(
         except Exception:
             if not request_failed:
                 raise
+
+
+def fetch_data(
+    *,
+    app_key: str,
+    mode: str,
+    instruments: Sequence[str],
+    fields: Sequence[str],
+    output: Path,
+    start: str | None = None,
+    end: str | None = None,
+    interval: str = '1D',
+) -> int:
+    data = extract_data(
+        app_key=app_key,
+        mode=mode,
+        instruments=instruments,
+        fields=fields,
+        output=output,
+        start=start,
+        end=end,
+        interval=interval,
+    )
+    return len(data)
 
 
 def build_parser() -> argparse.ArgumentParser:

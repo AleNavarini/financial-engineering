@@ -1,6 +1,6 @@
 # VIX Futures Volatility Study
 
-This project studies volatility through the historical VIX futures term structure. It extracts three years of daily data for the first nine VIX futures continuation contracts through the LSEG Data Library for Python.
+This project studies volatility through the historical VIX futures term structure. It provides a FastAPI service that extracts data for the first nine VIX futures continuation contracts through the LSEG Data Library for Python.
 
 The primary data set supports research on:
 
@@ -18,7 +18,7 @@ Refinitiv Workspace is now branded as **LSEG Workspace**. The names refer to the
 
 ## Data Scope
 
-The default run requests `VXc1` through `VXc9`, where `VXc1` is the nearest continuation contract and `VXc9` is the ninth. It writes daily last prices, settlement prices, and open interest to `data/vix_futures_3y.csv`.
+The default run requests `VXc1` through `VXc9`, where `VXc1` is the nearest continuation contract and `VXc9` is the ninth. API fetches write daily data to a request-specific CSV file such as `data/data_VXc1_VXc2.csv`.
 
 Continuation RICs make historical curve research simple, but the contract behind each RIC changes at roll points. The output is suitable for term-structure and regime analysis. It is not, by itself, a tradable futures-strategy return series.
 
@@ -31,7 +31,7 @@ The default script uses a **desktop session**:
 3. The Python library connects to Workspace's local API service.
 4. The App Key identifies this application.
 5. `ld.get_history` requests the historical study data.
-6. The script writes the result to a CSV file.
+6. The API returns the result as JSON.
 
 Optional snapshot mode uses `ld.get_data`, which works through the available Desktop data route. The project does not use the explicit `ld.content.pricing.Definition(...).get_data()` endpoint because this account lacks its `trapi.data.pricing.read` scope.
 
@@ -196,10 +196,59 @@ python -m pip install -e .
 This installs:
 
 - `lseg-data`, the LSEG Data Library for Python
+- `fastapi` and `uvicorn`, the HTTP API framework and server
 - `python-dotenv`, which loads `.env`
 - This project as an editable local package
 
-## 6. Configure the Fetch Script
+## 6. Run the API
+
+Start the service while Workspace Desktop is open, signed in, and showing data:
+
+### Unix
+
+```bash
+make run
+```
+
+The `make run` target creates `.venv` and installs the project automatically when needed. It reinstalls dependencies if `pyproject.toml` changes. You can also run `make install` separately when you want to prepare the environment without starting the service.
+
+### Windows PowerShell
+
+GNU Make is not included with native Windows by default. Run the PowerShell launcher instead:
+
+```powershell
+.\run.ps1
+```
+
+It creates `.venv` and installs the project automatically when needed. If GNU Make is installed through WSL, MSYS2, or another Unix-like shell, `make run` also works. The Makefile detects the Windows `.venv\Scripts` paths automatically.
+
+The service listens on `http://127.0.0.1:8000` by default. Set `API_HOST` or `API_PORT` in the environment to change the bind address.
+
+The interactive API documentation is available at `http://127.0.0.1:8000/docs`. Check the service without contacting LSEG:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Request the default three-year history:
+
+```bash
+curl -X POST http://127.0.0.1:8000/data \
+  -H 'Content-Type: application/json' \
+  -d '{"mode":"history"}'
+```
+
+Request a current observation for selected instruments:
+
+```bash
+curl -X POST http://127.0.0.1:8000/data \
+  -H 'Content-Type: application/json' \
+  -d '{"mode":"snapshot","instruments":["VXc1","VXc2"]}'
+```
+
+The API writes each fetch to `data/data_<instruments>.csv` and returns the path in `output_file`, along with `mode`, `instruments`, `fields`, `row_count`, and a JSON `data` array. For example, `VX` writes `data/data_VX.csv`, while `BIGS` and `VXc1` write `data/data_BIGS_VXc1.csv`. The original CSV utility remains available in `fetch_data.py` when a custom fixed output path is required.
+
+## 7. Configure the Fetch Script
 
 Open `fetch_data.py`. The settings are constants at the top of the file. The default configuration extracts three years of daily history for the first nine VIX futures continuation contracts, not the VIX spot index:
 
@@ -246,7 +295,7 @@ OUTPUT = Path('data/vix_futures_current.csv')
 
 When the market is closed, `BID` and `ASK` can be empty. Last price, settlement, and open interest can still contain the latest available values.
 
-## 7. Run the Script
+## 8. Run the Script
 
 Before running it, confirm that LSEG Workspace Desktop is open, signed in, and showing data.
 
