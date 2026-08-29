@@ -200,9 +200,9 @@ This installs:
 - `python-dotenv`, which loads `.env`
 - This project as an editable local package
 
-## 6. Run the API
+## 6. Run the API and Dashboard
 
-Start the service while Workspace Desktop is open, signed in, and showing data:
+Start both services while Workspace Desktop is open, signed in, and showing data:
 
 ### Unix
 
@@ -210,7 +210,7 @@ Start the service while Workspace Desktop is open, signed in, and showing data:
 make run
 ```
 
-The `make run` target creates `.venv` and installs the project automatically when needed. It reinstalls dependencies if `pyproject.toml` changes. You can also run `make install` separately when you want to prepare the environment without starting the service.
+The `make run` target creates `.venv`, installs the Python package, installs the frontend dependencies with Bun, and starts both servers. It reinstalls Python dependencies if `pyproject.toml` changes. You can also run `make install` separately when you want to prepare the Python environment without starting the service.
 
 ### Windows PowerShell
 
@@ -220,9 +220,13 @@ GNU Make is not included with native Windows by default. Run the PowerShell laun
 .\run.ps1
 ```
 
-It creates `.venv` and installs the project automatically when needed. If GNU Make is installed through WSL, MSYS2, or another Unix-like shell, `make run` also works. The Makefile detects the Windows `.venv\Scripts` paths automatically.
+It creates `.venv` and installs the project automatically when needed. Install Bun first, then run the frontend separately with `cd frontend; bun install; bun run dev --host 127.0.0.1`. If GNU Make is installed through WSL, MSYS2, or another Unix-like shell, `make run` also works. The Makefile detects the Windows `.venv\Scripts` paths automatically.
 
-The service listens on `http://127.0.0.1:8000` by default. Set `API_HOST` or `API_PORT` in the environment to change the bind address.
+The API listens on `http://127.0.0.1:8000` and the development dashboard listens on `http://127.0.0.1:5173` by default. Open the dashboard at `http://127.0.0.1:5173`. Set `API_HOST` or `API_PORT` in the environment to change the API bind address.
+
+The Signal Desk dashboard can fetch historical data for multiple tickers, browse every CSV in `DATA_DIR`, download the original files, inspect paginated rows, and graph any detected numeric column. Press `Ctrl-C` in the `make run` terminal to stop both servers.
+
+To serve the built frontend from FastAPI on one port instead, run `make run-prod` and open `http://127.0.0.1:8000`.
 
 The interactive API documentation is available at `http://127.0.0.1:8000/docs`. Check the service without contacting LSEG:
 
@@ -250,6 +254,9 @@ The API has separate controllers for historical and current data:
 
 - `POST /history` accepts one `ticker` or an `instruments` list, plus required `start` and `end` dates.
 - `POST /data` accepts one `ticker` or an `instruments` list for a current snapshot. It does not accept history dates.
+- `GET /datasets` lists all valid CSV files in `DATA_DIR`.
+- `GET /datasets/{name}` returns normalized columns, detected types, metadata, and rows.
+- `GET /datasets/{name}/download` downloads the original CSV file.
 
 Each historical fetch writes the date range into its filename, for example `data/data_VXc1_2024-01-01_to_2024-12-31.csv`. A request for `BIGS` and `VXc1` writes a separate file such as `data/data_BIGS_VXc1_2024-01-01_to_2024-12-31.csv`. Both responses include the resolved `ticker`, `instruments`, `start`, `end`, and `output_file` values.
 

@@ -1,14 +1,17 @@
 import os
+import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
 from pydantic import ValidationError
+from fastapi.testclient import TestClient
 
 from financial_engineering.app import app
 from financial_engineering.application.use_cases.get_data import get_data_controller
 from financial_engineering.application.use_cases.get_history import get_history_controller
+from financial_engineering.application.datasets import datasets_controller
 from financial_engineering.infrastructure import lseg_client
 
 
@@ -133,6 +136,54 @@ class ApiTest(unittest.TestCase):
 
         self.assertIn('/history', routes)
         self.assertIn('/data', routes)
+        self.assertIn('/datasets', routes)
+
+
+class DatasetApiTest(unittest.TestCase):
+    def setUp(self):
+        self.temp_directory = tempfile.TemporaryDirectory()
+        self.previous_directory = datasets_controller.dataset_store.data_directory
+        datasets_controller.dataset_store.data_directory = Path(self.temp_directory.name)
+        (Path(self.temp_directory.name) / 'curve.csv').write_text(
+            ',VXc1,VXc1,VXc2,VXc2\n'
+            ',TRDPRC_1,OPINT_1,TRDPRC_1,OPINT_1\n'
+            'Date,,,,\n'
+            '2026-01-01,20.1,10,21.2,12\n'
+            '2026-01-02,20.4,11,21.5,13\n',
+            encoding='utf-8',
+        )
+        self.client = TestClient(app)
+
+    def tearDown(self):
+        datasets_controller.dataset_store.data_directory = self.previous_directory
+        self.temp_directory.cleanup()
+
+    def test_datasets_can_be_listed_and_read(self):
+        response = self.client.get('/datasets')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['datasets'][0]['row_count'], 2)
+
+        response = self.client.get('/datasets/curve.csv')
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body['date_range'], {'start': '2026-01-01', 'end': '2026-01-02'})
+        self.assertEqual(body['columns'][1]['label'], 'VXc1 / TRDPRC_1')
+        self.assertEqual(body['columns'][1]['type'], 'number')
+        self.assertEqual(body['rows'][0]['VXc1 / TRDPRC_1'], 20.1)
+
+    def test_dataset_can_be_downloaded_and_unsafe_path_is_rejected(self):
+        response = self.client.get('/datasets/curve.csv/download')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('text/csv', response.headers['content-type'])
+        self.assertIn('VXc1', response.text)
+
+        response = self.client.get('/datasets/..%2Fpyproject.toml')
+
+        self.assertEqual(response.status_code, 404)
 
 
 if __name__ == '__main__':

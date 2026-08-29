@@ -1,9 +1,17 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
 
+from financial_engineering.application.datasets.datasets_controller import (
+    router as datasets_router,
+)
 from financial_engineering.application.use_cases.get_data.get_data_controller import (
     router as data_router,
 )
@@ -19,10 +27,16 @@ app = FastAPI(
 )
 app.include_router(data_router)
 app.include_router(history_router)
+app.include_router(datasets_router)
+
+FRONTEND_DIST = Path(__file__).resolve().parents[2] / 'frontend' / 'dist'
+load_dotenv(Path(__file__).resolve().parents[2] / '.env')
 
 
-@app.get('/')
-def root() -> dict[str, str]:
+@app.get('/', response_model=None)
+def root() -> Any:
+    if (FRONTEND_DIST / 'index.html').is_file():
+        return FileResponse(FRONTEND_DIST / 'index.html')
     return {
         'name': 'Financial Engineering Data API',
         'docs': '/docs',
@@ -45,6 +59,10 @@ def main() -> None:
         host=os.getenv('API_HOST', '127.0.0.1'),
         port=int(os.getenv('API_PORT', '8000')),
     )
+
+
+if FRONTEND_DIST.is_dir():
+    app.mount('/', StaticFiles(directory=FRONTEND_DIST, html=True), name='frontend')
 
 
 if __name__ == '__main__':
