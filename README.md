@@ -1,6 +1,7 @@
 # Financial Engineering
 
 This project extracts financial data from Refinitiv Workspace through the LSEG Data Library for Python.
+It supports the Workspace Desktop environment on macOS and Windows only.
 
 Refinitiv Workspace is now branded as **LSEG Workspace**. The names refer to the same desktop product used by this project.
 
@@ -23,8 +24,6 @@ Signing in to Workspace in a browser is not enough for a desktop session. The in
 - LSEG Workspace Desktop for macOS or Windows
 - Python 3.12
 - Internet access from Workspace and Python
-
-Linux does not support the Workspace Desktop session. Linux users need LSEG Data Platform machine credentials and the platform session described in [Platform Access](#platform-access).
 
 ## 1. Install Workspace
 
@@ -52,9 +51,23 @@ Workspace must remain open and signed in while `fetch_data.py` runs.
 
 Workspace must remain open and signed in while `fetch_data.py` runs.
 
-## 2. Create the App Key
+## 2. Select or Create the App Key
 
-The App Key identifies this application. It is not the same as your Workspace password.
+The App Key identifies this application. It is not the same as your Workspace password. The key must be registered for the **EDP API** (Enterprise Data Platform API), because this project uses the LSEG Data Library API.
+
+### Use an Existing UCEMA App Key
+
+The UCEMA account already has several App Keys. Use one of the existing keys instead of creating another one:
+
+1. Open the AppKey Generator.
+2. Review the keys already registered for the UCEMA account.
+3. Select a key registered for **EDP API**.
+4. Copy its **API Key** value.
+5. Set that value as `LSEG_APP_KEY` in `.env`.
+
+The App Key identifies the application, but it does not grant data entitlements by itself. The Workspace account must also have permission to access the requested data through the API.
+
+If no existing key is suitable, create a new one:
 
 1. Open the [LSEG API Docs](https://apidocs.refinitiv.com/Apps/ApiDocs).
 2. Open **AppKey Generator**.
@@ -92,8 +105,6 @@ Edit `.env` and set the App Key:
 ```env
 LSEG_APP_KEY=YOUR_APP_KEY
 ```
-
-The desktop session does not need `LSEG_USERNAME` or `LSEG_PASSWORD`. Those values are only needed for [Platform Access](#platform-access).
 
 Never commit `.env` or put credentials directly in source control.
 
@@ -214,35 +225,6 @@ data/refinitiv_data.csv
 
 The `data/` directory and generated CSV files are ignored by Git.
 
-## Platform Access
-
-The desktop session is intended for interactive use. For scheduled or unattended jobs, use a platform session instead.
-
-Platform access requires:
-
-- An LSEG Data Platform or machine-account username
-- A machine-account password
-- An App Key
-
-Put all three values in `.env`:
-
-```env
-LSEG_USERNAME=YOUR_MACHINE_ID
-LSEG_PASSWORD=YOUR_MACHINE_PASSWORD
-LSEG_APP_KEY=YOUR_APP_KEY
-```
-
-The Machine ID is provided by LSEG. It is usually not your Workspace email address. The current `fetch_data.py` uses the desktop session by design. The lower-level CLI supports platform access:
-
-```bash
-refinitiv-extract \
-  --session platform \
-  --mode history \
-  --instruments 'AAPL.O' \
-  --fields 'TRDPRC_1' \
-  --start 2025-01-01
-```
-
 ## Troubleshooting
 
 ### Workspace is signed out
@@ -298,6 +280,4 @@ Remove-Item -Recurse -Force .venv
 ## Security
 
 - Keep `.env` local.
-- Do not commit passwords, App Keys, or Machine IDs.
-- Do not pass passwords as command-line arguments.
-- Use a machine account and platform access for unattended production jobs.
+- Do not commit App Keys.

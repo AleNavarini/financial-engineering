@@ -22,7 +22,6 @@ def main() -> None:
 
     row_count = fetch_data(
         app_key=app_key,
-        session_type='desktop',
         mode='history',
         instruments=INSTRUMENTS,
         fields=FIELDS,
