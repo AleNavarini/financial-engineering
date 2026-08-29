@@ -1,6 +1,8 @@
-# VIX Futures Volatility Study
+# Estudio de volatilidad | Ingeniería Financiera UCEMA
 
 This project studies volatility through the historical VIX futures term structure. It provides a FastAPI service that extracts data for the first two VIX futures continuation contracts through the LSEG Data Library for Python.
+
+Trabajo académico de Ingeniería Financiera de UCEMA. Responsables: Alejandro Navarini y Tomas Perez.
 
 The primary data set supports research on:
 
@@ -202,7 +204,7 @@ This installs:
 
 ## 6. Run the API and Dashboard
 
-Start both services while Workspace Desktop is open, signed in, and showing data:
+Start the service while Workspace Desktop is open, signed in, and showing data:
 
 ### Unix
 
@@ -210,7 +212,7 @@ Start both services while Workspace Desktop is open, signed in, and showing data
 make run
 ```
 
-The `make run` target creates `.venv`, installs the Python package, installs the frontend dependencies with Bun, and starts both servers. It reinstalls Python dependencies if `pyproject.toml` changes. You can also run `make install` separately when you want to prepare the Python environment without starting the service.
+The `make run` target creates `.venv`, installs the Python package, and starts the API and dashboard from one server. No Node.js, Bun, or frontend build is required. It reinstalls Python dependencies if `pyproject.toml` changes. You can also run `make install` separately when you want to prepare the Python environment without starting the service.
 
 ### Windows PowerShell
 
@@ -220,13 +222,11 @@ GNU Make is not included with native Windows by default. Run the PowerShell laun
 .\run.ps1
 ```
 
-It creates `.venv` and installs the project automatically when needed. Install Bun first, then run the frontend separately with `cd frontend; bun install; bun run dev --host 127.0.0.1`. If GNU Make is installed through WSL, MSYS2, or another Unix-like shell, `make run` also works. The Makefile detects the Windows `.venv\Scripts` paths automatically.
+It creates `.venv` and installs the project automatically when needed. No frontend installation is required. If GNU Make is installed through WSL, MSYS2, or another Unix-like shell, `make run` also works. The Makefile detects the Windows `.venv\Scripts` paths automatically.
 
-The API listens on `http://127.0.0.1:8000` and the development dashboard listens on `http://127.0.0.1:5173` by default. Open the dashboard at `http://127.0.0.1:5173`. Set `API_HOST` or `API_PORT` in the environment to change the API bind address.
+The API and dashboard listen on `http://127.0.0.1:8000` by default. Open the dashboard at `http://127.0.0.1:8000`. Set `API_HOST` or `API_PORT` in the environment to change the bind address.
 
-The Signal Desk dashboard can fetch historical data for multiple tickers, browse every CSV in `DATA_DIR`, download the original files, inspect paginated rows, and graph any detected numeric column. Press `Ctrl-C` in the `make run` terminal to stop both servers.
-
-To serve the built frontend from FastAPI on one port instead, run `make run-prod` and open `http://127.0.0.1:8000`.
+El dashboard de Ingeniería Financiera puede consultar datos históricos para varios tickers, explorar todos los CSV de `DATA_DIR`, descargar los archivos originales, inspeccionar filas paginadas y graficar cualquier columna numérica detectada. Presioná `Ctrl-C` en la terminal de `make run` para detener el servicio.
 
 The interactive API documentation is available at `http://127.0.0.1:8000/docs`. Check the service without contacting LSEG:
 

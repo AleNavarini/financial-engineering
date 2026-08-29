@@ -29,14 +29,14 @@ app.include_router(data_router)
 app.include_router(history_router)
 app.include_router(datasets_router)
 
-FRONTEND_DIST = Path(__file__).resolve().parents[2] / 'frontend' / 'dist'
+FRONTEND_DIR = Path(__file__).resolve().parents[2] / 'frontend'
 load_dotenv(Path(__file__).resolve().parents[2] / '.env')
 
 
 @app.get('/', response_model=None)
 def root() -> Any:
-    if (FRONTEND_DIST / 'index.html').is_file():
-        return FileResponse(FRONTEND_DIST / 'index.html')
+    if (FRONTEND_DIR / 'index.html').is_file():
+        return FileResponse(FRONTEND_DIR / 'index.html')
     return {
         'name': 'Financial Engineering Data API',
         'docs': '/docs',
@@ -61,8 +61,8 @@ def main() -> None:
     )
 
 
-if FRONTEND_DIST.is_dir():
-    app.mount('/', StaticFiles(directory=FRONTEND_DIST, html=True), name='frontend')
+if FRONTEND_DIR.is_dir():
+    app.mount('/', StaticFiles(directory=FRONTEND_DIR, html=True), name='frontend')
 
 
 if __name__ == '__main__':

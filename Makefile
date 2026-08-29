@@ -10,7 +10,7 @@ endif
 
 INSTALL_MARKER := $(VENV)/.installed
 
-.PHONY: install frontend-install frontend-build run run-prod test
+.PHONY: install run run-prod test
 
 install: $(INSTALL_MARKER)
 
@@ -19,19 +19,10 @@ $(INSTALL_MARKER): pyproject.toml
 	$(PYTHON_BIN) -m pip install -e .
 	$(PYTHON_BIN) -c "from pathlib import Path; Path('$(INSTALL_MARKER)').touch()"
 
-frontend-install:
-	cd frontend && bun install
+run: $(INSTALL_MARKER)
+	$(PYTHON_BIN) -m financial_engineering.app
 
-frontend-build: frontend-install
-	cd frontend && bun run build
-
-run: $(INSTALL_MARKER) frontend-install
-	@$(PYTHON_BIN) -m financial_engineering.app & backend_pid=$$!; \
-	(cd frontend && bun run dev --host 127.0.0.1) & frontend_pid=$$!; \
-	trap 'kill $$backend_pid $$frontend_pid 2>/dev/null || true' INT TERM EXIT; \
-	wait $$backend_pid $$frontend_pid
-
-run-prod: $(INSTALL_MARKER) frontend-build
+run-prod: $(INSTALL_MARKER)
 	$(PYTHON_BIN) -m financial_engineering.app
 
 test: $(INSTALL_MARKER)
