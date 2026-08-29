@@ -1,11 +1,26 @@
-# Financial Engineering
+# VIX Futures Volatility Study
 
-This project extracts financial data from Refinitiv Workspace through the LSEG Data Library for Python.
-It supports the Workspace Desktop environment on macOS and Windows only.
+This project studies volatility through the historical VIX futures term structure. It extracts three years of daily data for the first nine VIX futures continuation contracts through the LSEG Data Library for Python.
+
+The primary data set supports research on:
+
+- Contango and backwardation
+- Changes in the futures curve
+- Settlement-price behavior
+- Open interest across maturity positions
+- Volatility regimes and stress periods
+
+Current prices are optional. The study does not depend on them.
 
 Project guides and learning material are available in the [documentation index](docs/README.md).
 
 Refinitiv Workspace is now branded as **LSEG Workspace**. The names refer to the same desktop product used by this project.
+
+## Data Scope
+
+The default run requests `VXc1` through `VXc9`, where `VXc1` is the nearest continuation contract and `VXc9` is the ninth. It writes daily last prices, settlement prices, and open interest to `data/vix_futures_3y.csv`.
+
+Continuation RICs make historical curve research simple, but the contract behind each RIC changes at roll points. The output is suitable for term-structure and regime analysis. It is not, by itself, a tradable futures-strategy return series.
 
 ## How It Works
 
@@ -15,7 +30,10 @@ The default script uses a **desktop session**:
 2. Workspace is signed in and connected to LSEG.
 3. The Python library connects to Workspace's local API service.
 4. The App Key identifies this application.
-5. The script requests data and writes it to a CSV file.
+5. `ld.get_history` requests the historical study data.
+6. The script writes the result to a CSV file.
+
+Optional snapshot mode uses `ld.get_data`, which works through the available Desktop data route. The project does not use the explicit `ld.content.pricing.Definition(...).get_data()` endpoint because this account lacks its `trapi.data.pricing.read` scope.
 
 Signing in to Workspace in a browser is not enough for a desktop session. The installed Workspace Desktop application must be open and signed in.
 
@@ -204,9 +222,9 @@ OUTPUT = Path('data/vix_futures_3y.csv')
 
 Change these constants in Python when you need different data:
 
-- `MODE`: `snapshot` for current data or `history` for daily history
-- `INSTRUMENTS`: LSEG RICs such as `VXc1` through `VXc9`, or the current chain `0#VX:` for snapshot mode
-- `FIELDS`: fields such as `EXPIR_DATE`, `BID`, `ASK`, `SETTLE`, `ACVOL_1`, and `OPINT_1`
+- `MODE`: `history` for the study data or `snapshot` for an optional current observation
+- `INSTRUMENTS`: LSEG RICs such as `VXc1` through `VXc9`
+- `FIELDS`: historical fields such as `TRDPRC_1`, `SETTLE`, and `OPINT_1`; snapshot mode can also request `BID` and `ASK`
 - `START_DATE`: first date to request
 - `END_DATE`: last date to request
 - `OUTPUT`: CSV output path
@@ -214,6 +232,19 @@ Change these constants in Python when you need different data:
 Continuation RICs keep a stable maturity position: `VXc1` is the nearest contract, `VXc2` is the second nearest, and so on. The contract behind each column changes when contracts expire.
 
 The script automatically finds the Workspace Desktop Data API proxy on ports `9000` through `9060`. No proxy port configuration is required.
+
+### Optional Current Observation
+
+Current data is not required for the historical study. To request one current observation through the tested Desktop route, change these constants in `fetch_data.py`:
+
+```python
+MODE = 'snapshot'
+INSTRUMENTS = [f'VXc{month}' for month in range(1, 10)]
+FIELDS = ['BID', 'ASK', 'TRDPRC_1', 'SETTLE', 'OPINT_1']
+OUTPUT = Path('data/vix_futures_current.csv')
+```
+
+When the market is closed, `BID` and `ASK` can be empty. Last price, settlement, and open interest can still contain the latest available values.
 
 ## 7. Run the Script
 
@@ -267,7 +298,7 @@ An available proxy returns a response containing `ST_PROXY_READY`.
 
 ### `403` and `trapi.data.pricing.read`
 
-The LSEG account can display data in Workspace but may not have API pricing access. Ask LSEG to enable the `trapi.data.pricing.read` scope. Workspace display entitlements and API entitlements are separate.
+The explicit platform snapshot endpoint requires `trapi.data.pricing.read`, which this account does not have. The extractor avoids that endpoint: history uses `ld.get_history`, and optional current observations use `ld.get_data` through the Desktop session. Exchange entitlements still determine which values are returned.
 
 ### `ModuleNotFoundError`
 

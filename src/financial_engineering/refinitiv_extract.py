@@ -66,11 +66,10 @@ def fetch_data(
                 end=end or date.today().isoformat(),
             )
         else:
-            response = ld.content.pricing.Definition(
+            data = ld.get_data(
                 universe=instrument_list,
                 fields=list(fields),
-            ).get_data(session=session)
-            data = response.data.df
+            )
 
         output.parent.mkdir(parents=True, exist_ok=True)
         data.to_csv(output)

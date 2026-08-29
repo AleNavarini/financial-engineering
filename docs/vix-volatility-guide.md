@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This document explains the market concepts behind a possible volatility research project built with LSEG Workspace data, formerly called Refinitiv or Eikon data.
+This document explains the market concepts and data design for this volatility study built with LSEG Workspace data, formerly called Refinitiv or Eikon data.
 
-The initial project scope is the Cboe Volatility Index (`VIX`), VIX futures, and related instruments. The goal is to understand what each instrument and data field represents before designing software or a trading model.
+The first study data set contains three years of daily history for VIX futures continuation RICs `VXc1` through `VXc9`. The goal is to study the futures term structure, settlement behavior, open interest, and volatility regimes before adding strategy simulations or options.
 
 This is an educational and research document. It is not investment advice. Futures and options can produce losses larger than the initial cash committed to a position.
 
@@ -275,7 +275,7 @@ Consequences:
 
 Cboe lists standard monthly VIX futures and can also list weekly expirations. Weekly contracts provide more precise event timing, while monthly contracts are usually the main reference points for the term structure.
 
-The active set changes over time as contracts expire and new contracts are listed. A project should discover the current chain instead of maintaining a static list.
+The active set changes over time as contracts expire and new contracts are listed. Live contract monitoring should discover the current chain. This historical study uses continuation RICs to keep maturity positions stable across dates.
 
 ## 6. The VIX Futures Term Structure
 
@@ -444,7 +444,7 @@ For example, an individual September 2026 VIX futures RIC can use the form `VXU6
 
 A chain RIC represents a changing list of related instruments. The active VIX futures chain is `0#VX:`.
 
-The chain should be the primary source for discovering currently listed contracts because:
+The chain should be the primary source when discovering currently listed individual contracts because:
 
 - Contracts expire.
 - New contracts are listed.
@@ -452,6 +452,8 @@ The chain should be the primary source for discovering currently listed contract
 - Static contract lists become stale.
 
 LSEG states that the active VIX chain changed on September 10, 2012. Historical work before that date may require the older `0#VX:VE` convention or specific expired-contract RICs.
+
+The current study does not depend on `0#VX:`. It requests `VXc1` through `VXc9` directly from the historical service.
 
 ### 8.4 Continuation RICs
 
@@ -662,20 +664,21 @@ These descriptions explain exposures, not recommendations.
 
 This section translates market concepts into possible project functions.
 
-### 11.1 Observe the current market
+### 11.1 Build the historical study data set
 
 Action:
 
-- Load spot VIX and the active VIX futures chain.
-- Display bid, ask, last, settlement, volume, open interest, and expiration.
+- Load three years of daily data for `VXc1` through `VXc9`.
+- Store last price, settlement, and open interest for each maturity position.
+- Preserve missing values instead of replacing them with assumed values.
 
 What it represents:
 
-- The current level of expected near-term volatility.
-- Market prices for future VIX settlement dates.
-- Current curve shape and liquidity.
+- The historical shape of the VIX futures curve.
+- Changes in volatility pricing across maturity positions.
+- Open-interest concentration through time.
 
-This is the best first feature because every later calculation depends on clean contract identification and prices.
+This is the first project feature because it works with the confirmed account permissions and supports reproducible term-structure analysis.
 
 ### 11.2 Classify contango and backwardation
 
@@ -715,6 +718,8 @@ What it represents:
 - The difference between today's constant 30-day implied-volatility measure and prices for future settlement dates.
 
 The horizons are different, so the basis is not a risk-free arbitrage signal.
+
+This is a later extension. The first data set intentionally excludes spot VIX.
 
 ### 11.5 Monitor liquidity
 
@@ -820,7 +825,7 @@ An alert reports a defined condition. It does not, by itself, establish a profit
 Three separate conditions affect access:
 
 1. **Application identity:** The App Key identifies the application. This desktop project requires a key registered for both Eikon Data API and EDP API.
-2. **API scope:** Snapshot pricing can require `trapi.data.pricing.read`.
+2. **API route:** Historical data works through `ld.get_history`. Optional current observations work through the Desktop `ld.get_data` route. The explicit platform snapshot endpoint is blocked because the account lacks `trapi.data.pricing.read`.
 3. **Market-data entitlement:** The signed-in user must be entitled to the exchange and instrument data.
 
 An App Key does not grant market-data rights. A user can sometimes view an instrument in Workspace but lack access to the same field through a specific API service.
@@ -836,6 +841,8 @@ Real-time futures data can include:
 - Open interest updates where supplied
 
 Real-time Cboe futures data can be fee-liable. The UCEMA account must have the required entitlement.
+
+For this account, `ld.get_data` returned the last price and settlement for VIX continuation RICs. Bid and ask were empty while the market was closed. The project uses this route only for optional current observations. The historical study does not require it.
 
 ### 12.3 Delayed data
 
@@ -853,6 +860,14 @@ Potential historical intervals include:
 
 History depth, row limits, and available fields vary by service. Historical daily access does not guarantee access to real-time quotes or full historical order-book data.
 
+The confirmed study request returns three years of daily data for `VXc1` through `VXc9`. The confirmed fields are:
+
+- `TRDPRC_1`
+- `SETTLE`
+- `OPINT_1`
+
+The historical request omitted `ACVOL_1`, so the first study data set does not claim to contain volume.
+
 ### 12.5 Reference data
 
 Reference data describes the contract rather than its changing market price. It can include:
@@ -867,61 +882,59 @@ Reference data describes the contract rather than its changing market price. It 
 
 Reference data is necessary for calculating days to expiration and preventing contracts from being mixed incorrectly.
 
-## 13. Required Entitlement Inventory
+## 13. Confirmed Data Access
 
-Before selecting the final project scope, the application should test the UCEMA account for:
+The following table separates confirmed access from later research extensions:
 
-| Data set | Candidate instrument | Candidate fields | Why needed |
+| Status | Data set | Instrument | Fields or access |
 | --- | --- | --- | --- |
-| Spot VIX | `.VIX` | Last or close | Current volatility level |
-| Active futures | `0#VX:` | Contract identity and prices | Current curve |
-| Contract metadata | Chain constituents | Expiration and contract month | Correct ordering |
-| Futures liquidity | Chain constituents | Bid, ask, volume, open interest | Execution and roll analysis |
-| Futures history | Individual RICs | Settlement or close | Historical curves and backtests |
-| Continuations | `VXc1`, `VXc2`, etc. | Daily prices | Quick charts and validation |
-| S&P 500 | Relevant index RIC | Daily close | Equity returns and realized volatility |
-| VIX family | Discovered RICs | Daily close | Horizon and volatility-of-volatility analysis |
-| VIX options | Discovered option chains | Strike, call/put, expiry, bid, ask | Option-surface research |
-| SPX options | Discovered option chains | Strike, expiry, quotes | Advanced VIX replication |
+| Confirmed | Futures history | `VXc1` through `VXc9` | `TRDPRC_1`, `SETTLE`, `OPINT_1` |
+| Confirmed | Optional current values | `VXc1`, `VXc2`, etc. | Last and settlement through `ld.get_data` |
+| Not available through tested history | Historical volume | Continuation RICs | `ACVOL_1` was omitted |
+| Blocked and not required | Explicit pricing snapshot | VIX futures | Missing `trapi.data.pricing.read` |
+| Later extension | Spot VIX | `.VIX` | Daily close for basis analysis |
+| Later extension | Individual contracts | Expired and active contract RICs | Expiry-aware curve reconstruction |
+| Later extension | S&P 500 | Relevant index RIC | Returns and realized volatility |
+| Later extension | VIX and SPX options | Option-chain RICs | Option-surface and VIX replication research |
 
-The current Workspace local API was not available when this document was drafted. These rows describe what to test, not confirmed UCEMA entitlements.
+App Key registration does not grant these permissions. LSEG API scopes and exchange entitlements remain separate controls.
 
 ## 14. Recommended Project Scope
 
 ### 14.1 Recommended first version
 
-Build a **VIX Futures Term Structure Research Tool**.
+Build a **Historical VIX Futures Volatility Study**.
 
 The first version should:
 
-1. Discover active contracts from `0#VX:`.
-2. Load contract descriptions and expiration dates.
-3. Load bid, ask, last, settlement, volume, and open interest when available.
-4. Sort contracts by expiration.
-5. Calculate midpoint, spread, days to expiration, basis, and adjacent slopes.
-6. Classify contango and backwardation.
-7. Save a timestamped CSV snapshot.
-8. Produce a curve chart and a readable table.
-9. State which fields are unavailable or not entitled.
+1. Load three years of `VXc1` through `VXc9` daily history.
+2. Store last price, settlement, and open interest without filling missing values.
+3. Validate dates, fields, and maturity ordering.
+4. Calculate adjacent curve slopes from settlement prices.
+5. Classify contango and backwardation by date.
+6. Measure changes in the curve through time.
+7. Produce historical curve charts, heat maps, and summary tables.
+8. Record the limits of continuation series at contract roll points.
 
 This version provides useful research value without requiring an options-pricing model.
 
 ### 14.2 Second version
 
-Add historical collection and analysis:
+Add related volatility series and analysis:
 
-- Daily curve snapshots
-- Historical curve heat map
 - VIX and S&P 500 comparison
 - Realized-volatility calculations
 - Regime labels
 - Event annotations
 - Data-quality reports
+- Optional current observations through `ld.get_data`
 
 ### 14.3 Third version
 
-Add explicit strategy simulations:
+Add individual-contract history and explicit strategy simulations:
 
+- Expired-contract RIC discovery
+- Expiration dates and days to expiration
 - Front-month rolling exposure
 - Constant-maturity futures exposure
 - Calendar spreads
@@ -992,7 +1005,18 @@ Spot VIX, futures, S&P 500 prices, and settlement values can refer to different 
 
 VIX behavior changes across calm periods, crises, policy regimes, and market-structure changes. Historical correlation does not guarantee future behavior.
 
-## 16. Suggested Data Model
+## 16. Study Data Model
+
+### 16.1 Current historical export
+
+`data/vix_futures_3y.csv` uses dates as rows and a two-level column header:
+
+- Level 1: continuation RIC from `VXc1` through `VXc9`
+- Level 2: `TRDPRC_1`, `SETTLE`, or `OPINT_1`
+
+This wide format is convenient for curve calculations and comparisons across maturity positions. Missing source values remain empty.
+
+### 16.2 Later individual-contract model
 
 A curve snapshot can use one row per contract and timestamp:
 
