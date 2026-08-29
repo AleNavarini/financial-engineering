@@ -1,0 +1,19 @@
+[build-system]
+requires = ['setuptools>=68']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'financial-engineering'
+version = '0.1.0'
+description = 'Financial data extraction tools for LSEG Data Platform'
+requires-python = '>=3.11'
+dependencies = [
+  'lseg-data>=1.0.0',
+  'python-dotenv>=1.0.0',
+]
+
+[project.scripts]
+refinitiv-extract = 'financial_engineering.refinitiv_extract:main'
+
+[tool.setuptools.packages.find]
+where = ['src']
