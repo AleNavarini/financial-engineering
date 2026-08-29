@@ -172,28 +172,6 @@ class LsegClient:
                 if not request_failed:
                     raise
 
-    def fetch_data(
-        self,
-        *,
-        mode: str,
-        instruments: Sequence[str],
-        fields: Sequence[str],
-        output: Path,
-        start: str | None = None,
-        end: str | None = None,
-        interval: str = '1D',
-    ) -> int:
-        data = self.extract_data(
-            mode=mode,
-            instruments=instruments,
-            fields=fields,
-            output=output,
-            start=start,
-            end=end,
-            interval=interval,
-        )
-        return len(data)
-
     def _execute_request(
         self,
         *,

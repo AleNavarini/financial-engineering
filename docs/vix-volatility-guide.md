@@ -4,7 +4,7 @@
 
 This document explains the market concepts and data design for this volatility study built with LSEG Workspace data, formerly called Refinitiv or Eikon data.
 
-The first study data set contains three years of daily history for VIX futures continuation RICs `VXc1` through `VXc9`. The goal is to study the futures term structure, settlement behavior, open interest, and volatility regimes before adding strategy simulations or options.
+The first study data set contains three years of daily history for the explicitly selected VIX futures continuation RICs `VXc1` and `VXc2`. The goal is to study the front of the futures term structure, settlement behavior, open interest, and volatility regimes before adding strategy simulations or options.
 
 This is an educational and research document. It is not investment advice. Futures and options can produce losses larger than the initial cash committed to a position.
 
@@ -453,7 +453,7 @@ The chain should be the primary source when discovering currently listed individ
 
 LSEG states that the active VIX chain changed on September 10, 2012. Historical work before that date may require the older `0#VX:VE` convention or specific expired-contract RICs.
 
-The current study does not depend on `0#VX:`. It requests `VXc1` through `VXc9` directly from the historical service.
+The current study does not depend on `0#VX:`. It requests `VXc1` and `VXc2` directly from the historical service.
 
 ### 8.4 Continuation RICs
 
@@ -668,7 +668,7 @@ This section translates market concepts into possible project functions.
 
 Action:
 
-- Load three years of daily data for `VXc1` through `VXc9`.
+- Load three years of daily data for `VXc1` and `VXc2`.
 - Store last price, settlement, and open interest for each maturity position.
 - Preserve missing values instead of replacing them with assumed values.
 
@@ -860,7 +860,7 @@ Potential historical intervals include:
 
 History depth, row limits, and available fields vary by service. Historical daily access does not guarantee access to real-time quotes or full historical order-book data.
 
-The confirmed study request returns three years of daily data for `VXc1` through `VXc9`. The confirmed fields are:
+The confirmed study request returns three years of daily data for `VXc1` and `VXc2`. The confirmed fields are:
 
 - `TRDPRC_1`
 - `SETTLE`
@@ -888,8 +888,8 @@ The following table separates confirmed access from later research extensions:
 
 | Status | Data set | Instrument | Fields or access |
 | --- | --- | --- | --- |
-| Confirmed | Futures history | `VXc1` through `VXc9` | `TRDPRC_1`, `SETTLE`, `OPINT_1` |
-| Confirmed | Optional current values | `VXc1`, `VXc2`, etc. | Last and settlement through `ld.get_data` |
+| Confirmed | Futures history | `VXc1`, `VXc2` | `TRDPRC_1`, `SETTLE`, `OPINT_1` |
+| Confirmed | Optional current values | `VXc1`, `VXc2` | Last and settlement through `ld.get_data` |
 | Not available through tested history | Historical volume | Continuation RICs | `ACVOL_1` was omitted |
 | Blocked and not required | Explicit pricing snapshot | VIX futures | Missing `trapi.data.pricing.read` |
 | Later extension | Spot VIX | `.VIX` | Daily close for basis analysis |
@@ -907,7 +907,7 @@ Build a **Historical VIX Futures Volatility Study**.
 
 The first version should:
 
-1. Load three years of `VXc1` through `VXc9` daily history.
+1. Load three years of `VXc1` and `VXc2` daily history.
 2. Store last price, settlement, and open interest without filling missing values.
 3. Validate dates, fields, and maturity ordering.
 4. Calculate adjacent curve slopes from settlement prices.
@@ -1011,7 +1011,7 @@ VIX behavior changes across calm periods, crises, policy regimes, and market-str
 
 `data/vix_futures_3y.csv` uses dates as rows and a two-level column header:
 
-- Level 1: continuation RIC from `VXc1` through `VXc9`
+- Level 1: explicitly selected continuation RIC, currently `VXc1` or `VXc2`
 - Level 2: `TRDPRC_1`, `SETTLE`, or `OPINT_1`
 
 This wide format is convenient for curve calculations and comparisons across maturity positions. Missing source values remain empty.

@@ -1,6 +1,6 @@
 # VIX Futures Volatility Study
 
-This project studies volatility through the historical VIX futures term structure. It provides a FastAPI service that extracts data for the first nine VIX futures continuation contracts through the LSEG Data Library for Python.
+This project studies volatility through the historical VIX futures term structure. It provides a FastAPI service that extracts data for the first two VIX futures continuation contracts through the LSEG Data Library for Python.
 
 The primary data set supports research on:
 
@@ -18,7 +18,7 @@ Refinitiv Workspace is now branded as **LSEG Workspace**. The names refer to the
 
 ## Data Scope
 
-The default run requests `VXc1` through `VXc9`, where `VXc1` is the nearest continuation contract and `VXc9` is the ninth. API fetches write daily data to a request-specific CSV file such as `data/data_VXc1_VXc2.csv`.
+The default run explicitly requests `VXc1` and `VXc2`, the nearest and second-nearest continuation contracts. API fetches write daily data to a request-specific CSV file such as `data/data_VXc1_VXc2.csv`.
 
 Continuation RICs make historical curve research simple, but the contract behind each RIC changes at roll points. The output is suitable for term-structure and regime analysis. It is not, by itself, a tradable futures-strategy return series.
 
@@ -58,7 +58,7 @@ Use the official [LSEG Workspace download page](https://www.lseg.com/en/data-ana
 5. Sign in with your LSEG credentials.
 6. Confirm that market data is visible in Workspace before running Python.
 
-Workspace must remain open and signed in while `fetch_data.py` runs.
+Workspace must remain open and signed in while API requests run.
 
 ### Windows
 
@@ -69,7 +69,7 @@ Workspace must remain open and signed in while `fetch_data.py` runs.
 5. Sign in with your LSEG credentials.
 6. Confirm that market data is visible in Workspace before running Python.
 
-Workspace must remain open and signed in while `fetch_data.py` runs.
+Workspace must remain open and signed in while API requests run.
 
 ## 2. Select or Create the App Key
 
@@ -230,12 +230,12 @@ The interactive API documentation is available at `http://127.0.0.1:8000/docs`. 
 curl http://127.0.0.1:8000/health
 ```
 
-Request historical data with an explicit ticker and date range:
+Request historical data with the explicit `VXc1` and `VXc2` instruments and date range:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/history \
   -H 'Content-Type: application/json' \
-  -d '{"ticker":"VXc1","start":"2024-01-01","end":"2024-12-31"}'
+  -d '{"instruments":["VXc1","VXc2"],"start":"2024-01-01","end":"2024-12-31"}'
 ```
 
 Request a current observation for selected instruments:
@@ -256,12 +256,12 @@ Each historical fetch writes the date range into its filename, for example `data
 The same use cases are available as Python CLI commands:
 
 ```bash
-financial-engineering-history \
+get-history \
   --ticker VXc1 \
   --start 2024-01-01 \
   --end 2024-12-31
 
-financial-engineering-data --ticker VXc1
+get-data --ticker VXc1
 ```
 
 The equivalent module commands are:
@@ -276,78 +276,7 @@ python -m financial_engineering.application.use_cases.get_data.get_data_controll
   --ticker VXc1
 ```
 
-## 7. Configure the Fetch Script
-
-Open `fetch_data.py`. The settings are constants at the top of the file. The default configuration extracts three years of daily history for the first nine VIX futures continuation contracts, not the VIX spot index:
-
-```python
-MODE = 'history'
-INSTRUMENTS = [f'VXc{month}' for month in range(1, 10)]
-FIELDS = [
-    'TRDPRC_1',
-    'SETTLE',
-    'OPINT_1',
-]
-END_DATE = date.today()
-try:
-    START_DATE = END_DATE.replace(year=END_DATE.year - 3).isoformat()
-except ValueError:
-    START_DATE = END_DATE.replace(year=END_DATE.year - 3, day=28).isoformat()
-END_DATE = END_DATE.isoformat()
-OUTPUT = Path('data/vix_futures_3y.csv')
-```
-
-Change these constants in Python when you need different data:
-
-- `MODE`: `history` for the study data or `snapshot` for an optional current observation
-- `INSTRUMENTS`: LSEG RICs such as `VXc1` through `VXc9`
-- `FIELDS`: historical fields such as `TRDPRC_1`, `SETTLE`, and `OPINT_1`; snapshot mode can also request `BID` and `ASK`
-- `START_DATE`: first date to request
-- `END_DATE`: last date to request
-- `OUTPUT`: CSV output path
-
-Continuation RICs keep a stable maturity position: `VXc1` is the nearest contract, `VXc2` is the second nearest, and so on. The contract behind each column changes when contracts expire.
-
-The script automatically finds the Workspace Desktop Data API proxy on ports `9000` through `9060`. No proxy port configuration is required.
-
-### Optional Current Observation
-
-Current data is not required for the historical study. To request one current observation through the tested Desktop route, change these constants in `fetch_data.py`:
-
-```python
-MODE = 'snapshot'
-INSTRUMENTS = [f'VXc{month}' for month in range(1, 10)]
-FIELDS = ['BID', 'ASK', 'TRDPRC_1', 'SETTLE', 'OPINT_1']
-OUTPUT = Path('data/vix_futures_current.csv')
-```
-
-When the market is closed, `BID` and `ASK` can be empty. Last price, settlement, and open interest can still contain the latest available values.
-
-## 8. Run the Script
-
-Before running it, confirm that LSEG Workspace Desktop is open, signed in, and showing data.
-
-### macOS
-
-```bash
-source .venv/bin/activate
-python3 fetch_data.py
-```
-
-### Windows PowerShell
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python fetch_data.py
-```
-
-The script fetches data and writes the result to:
-
-```text
-data/vix_futures_3y.csv
-```
-
-The `data/` directory and generated CSV files are ignored by Git.
+The API writes generated CSV files to `data/` and returns the path in `output_file`. The `data/` directory and generated CSV files are ignored by Git.
 
 ## Troubleshooting
 
