@@ -1,9 +1,9 @@
-# VIX Futures Volatility Study Documentation
+# Documentación del estudio de futuros del VIX
 
-This folder explains the volatility concepts, data choices, research limits, and future analysis for the VIX futures study.
+Esta carpeta explica los conceptos de volatilidad, las decisiones sobre los datos, los límites de la investigación y los próximos análisis del estudio de futuros del VIX.
 
-## Guides
+## Guías
 
-- [Volatility, VIX, Futures, and Options](vix-volatility-guide.md): The study guide for volatility, VIX futures curves, the confirmed LSEG data workflow, research actions, options, and common errors.
+- [Volatilidad, VIX, futuros y opciones](vix-volatility-guide.md): guía de estudio sobre volatilidad, curvas de futuros del VIX, el flujo de datos confirmado de LSEG, acciones de investigación, opciones y errores comunes.
 
-Add future explanations to this folder and list them here.
+Agrega las próximas explicaciones a esta carpeta y enlázalas desde este índice.
