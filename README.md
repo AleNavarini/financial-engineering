@@ -1,6 +1,8 @@
 # Ingenieria Financiera - UCEMA
 
-Herramienta para la materia de Ingenieria Financiera en UCEMA, bajo el profesor Mariano Alejandro Kruskevich, para buscar datos de futuros de VIX utilizando Refinitiv (LSEG).
+Este proyecto fue desarrollado como trabajo final de la materia Ingeniería Financiera de UCEMA, dictada por el profesor Mariano Alejandro Kruskevich, por los alumnos Alejandro Navarini y Tomás Pérez.
+
+Es una aplicación de Python desarrollada con FastAPI que incluye un dashboard web estático. Permite consultar información de LSEG Workspace mediante el proxy local que Workspace proporciona para las sesiones de escritorio.
 
 Esta guía explica cómo instalar y ejecutar el proyecto en Windows. Está dirigida a personas que no necesitan conocimientos técnicos previos.
 
