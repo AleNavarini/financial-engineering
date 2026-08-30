@@ -35,7 +35,7 @@ Python es el programa que permite ejecutar esta herramienta.
 
 > **Importante:** se debe instalar Python de **64 bits**. El proyecto fue probado con Python 3.12 de 64 bits. Es posible que versiones posteriores a Python 3.12 también funcionen, pero todavía no han sido comprobadas.
 
-1. Descargar e instalar [Python 3.12.9](https://www.python.org/ftp/python/3.12.9/python-3.12.9.exe).
+1. Descargar e instalar [Python 3.12.9](https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe).
 2. En la primera pantalla del instalador, marcar la opción **Add python.exe to PATH**.
 3. Hacer clic en **Install Now**.
 4. Esperar a que finalice la instalación y cerrar el instalador.
