@@ -1,8 +1,16 @@
-# Estudio de volatilidad de futuros del VIX
+# Estudio de volatilidad | Ingeniería Financiera UCEMA
 
-Este proyecto estudia la volatilidad mediante la estructura temporal histórica de los futuros del VIX. Extrae tres años de datos diarios para los primeros nueve contratos de continuación de futuros del VIX a través de la biblioteca de datos de LSEG para Python.
+Este proyecto es una herramienta de Ingeniería Financiera de UCEMA para consultar y explorar datos de mercado. Utiliza LSEG Workspace Desktop y la biblioteca de datos de LSEG para Python.
 
-El conjunto de datos permite investigar:
+El servicio incluye una API FastAPI y un dashboard web estático. Permite consultar datos históricos y actuales, guardar los resultados en CSV, explorar los archivos generados y visualizar sus columnas numéricas.
+
+Responsables: Alejandro Navarini y Tomas Perez.
+
+Refinitiv Workspace ahora se comercializa como **LSEG Workspace**. Ambos nombres se refieren al mismo producto de escritorio.
+
+## Qué analiza
+
+La configuración inicial consulta los contratos de continuación `VXc1` y `VXc2`, que representan el contrato del VIX más cercano y el segundo más cercano. El proyecto permite investigar:
 
 - Contango y backwardation
 - Cambios en la curva de futuros
@@ -10,87 +18,85 @@ El conjunto de datos permite investigar:
 - Interés abierto en distintas posiciones de vencimiento
 - Regímenes de volatilidad y períodos de estrés
 
-Los precios actuales son opcionales. El estudio no depende de ellos.
+Los RIC de continuación mantienen una posición de vencimiento estable, pero el contrato detrás de cada RIC cambia en los puntos de rollover. Los resultados sirven para analizar la estructura temporal y los regímenes de volatilidad. Por sí solos, no representan una serie de retornos de una estrategia negociable de futuros.
 
-Los materiales de aprendizaje están disponibles en el [índice de documentación](docs/README.md).
+## Cómo funciona
 
-Refinitiv Workspace ahora se comercializa como **LSEG Workspace**. Ambos nombres se refieren al mismo producto de escritorio.
+El flujo utiliza una **sesión de escritorio**:
+
+1. LSEG Workspace Desktop se ejecuta en el mismo equipo que el servicio Python.
+2. Workspace está abierto, autenticado y conectado a LSEG.
+3. La biblioteca de Python se conecta al proxy local de Workspace.
+4. El App Key identifica a esta aplicación.
+5. `ld.get_history` solicita los datos históricos.
+6. `ld.get_data` solicita una observación actual opcional.
+7. La API devuelve los datos y guarda una copia en `data/`.
+
+Iniciar sesión en Workspace desde un navegador no es suficiente. La aplicación instalada de Workspace Desktop debe estar abierta y autenticada.
 
 ## Inicio rápido
 
-Este es el orden general para ejecutar el proyecto:
+Después de completar la instalación, el flujo normal es:
 
-1. Instalar Git y Python 3.12.
-2. Instalar LSEG Workspace Desktop.
-3. Iniciar sesión en Workspace Desktop y confirmar que muestra datos.
-4. Obtener un App Key con acceso para Eikon Data API y EDP API.
-5. Clonar el repositorio.
-6. Crear un entorno virtual e instalar el proyecto.
-7. Guardar el App Key en `.env`.
-8. Ejecutar `fetch_data.py`.
-
-Workspace Desktop debe permanecer abierto y autenticado durante toda la extracción. Una sesión iniciada solamente en el navegador no es suficiente.
-
-### Flujo recomendado con `uv`
-
-`uv` es opcional. Es la alternativa recomendada para proyectos Python porque administra el entorno virtual y las dependencias desde `pyproject.toml` sin instalar paquetes globalmente.
-
-Con Git, Python, Workspace y `uv` instalados:
+### macOS
 
 ```bash
 cd financial-engineering
-uv venv --python 3.12
-uv pip install -e .
 cp .env.example .env
-uv run python -c "import lseg.data, dotenv; print('Dependencias instaladas correctamente')"
-uv run python fetch_data.py
+# Edita .env y completa LSEG_APP_KEY
+make run
 ```
 
-En Windows PowerShell, reemplaza el comando para copiar `.env` por:
+### Windows PowerShell
 
 ```powershell
+Set-Location financial-engineering
 Copy-Item .env.example .env
+# Edita .env y completa LSEG_APP_KEY
+.\run.ps1
 ```
 
-Después de crear `.env`, completa `LSEG_APP_KEY` antes de ejecutar el último comando. Para generar un entorno reproducible con lockfile, puedes usar `uv sync`; `uv` creará o actualizará `uv.lock` a partir de `pyproject.toml`. Si generas ese archivo para el proyecto, debes versionarlo junto con el cambio de dependencias.
+Abre `http://127.0.0.1:8000` en el navegador. La documentación interactiva de la API está en `http://127.0.0.1:8000/docs`.
 
 ## Requisitos
 
 - macOS o Windows
 - Git
 - Python 3.12
-- `uv` es opcional, pero recomendado para administrar el entorno y las dependencias
+- LSEG Workspace Desktop
 - Una cuenta de LSEG Workspace con acceso a los datos solicitados
 - Un App Key de LSEG
-- LSEG Workspace Desktop
 - Acceso a Internet desde Workspace y Python
+- GNU Make en macOS; en Windows puedes usar `run.ps1` sin instalar Make
 
-Python 3.11 es la versión mínima declarada por el proyecto, pero se recomienda Python 3.12 porque es la versión usada para validar las dependencias de LSEG.
+Python 3.11 es la versión mínima declarada por el proyecto, pero se recomienda Python 3.12 porque es la versión utilizada para validar las dependencias de LSEG.
+
+`uv` es opcional. Es una herramienta moderna para administrar Python, entornos virtuales y dependencias desde `pyproject.toml`.
 
 ## 1. Instalar Git y Python
 
-No instales paquetes de Python globalmente ni uses `sudo pip`. Todas las dependencias del proyecto se instalarán dentro de `.venv`.
+No instales paquetes de Python globalmente ni uses `sudo pip`. El proyecto crea y utiliza un entorno virtual local en `.venv`.
 
 ### macOS
 
 #### Instalar Homebrew
 
-Si ya tienes Homebrew, comprueba su instalación:
+Si ya tienes Homebrew, comprueba la instalación:
 
 ```bash
 brew --version
 ```
 
-Si no está instalado, ejecuta el comando oficial:
+Si no está instalado, ejecuta el instalador oficial:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Sigue las instrucciones que muestra el instalador para agregar Homebrew al `PATH`. Luego instala Git y Python 3.12:
+Sigue las instrucciones para agregar Homebrew al `PATH`. Luego instala Git, Python 3.12 y `uv`:
 
 ```bash
-brew install git python@3.12
+brew install git python@3.12 uv
 ```
 
 Comprueba las versiones:
@@ -98,55 +104,38 @@ Comprueba las versiones:
 ```bash
 git --version
 python3.12 --version
-```
-
-El comando debe mostrar Python 3.12.x.
-
-También puedes instalar `uv`, una herramienta moderna para administrar versiones de Python, entornos virtuales y paquetes:
-
-```bash
-brew install uv
 uv --version
 ```
 
 ### Windows
 
-Abre **PowerShell**. Si tienes `winget`, instala Git y Python 3.12 con:
+Abre **PowerShell**. Si tienes `winget`, instala Git, Python 3.12 y `uv`:
 
 ```powershell
 winget install --id Git.Git -e
 winget install --id Python.Python.3.12 -e
+winget install --id=astral-sh.uv -e
 ```
 
-Cierra y vuelve a abrir PowerShell para que se actualice el `PATH`. Comprueba las versiones:
+Cierra y vuelve a abrir PowerShell para actualizar el `PATH`. Comprueba las versiones:
 
 ```powershell
 git --version
 py -3.12 --version
-```
-
-También puedes instalar `uv`, una herramienta moderna para administrar versiones de Python, entornos virtuales y paquetes:
-
-```powershell
-winget install --id=astral-sh.uv -e
-```
-
-Cierra y vuelve a abrir PowerShell, y comprueba la instalación:
-
-```powershell
 uv --version
 ```
 
-Si `winget` no está disponible, descarga e instala ambos programas desde sus sitios oficiales:
+Si `winget` no está disponible, descarga e instala los programas desde sus sitios oficiales:
 
 - [Git para Windows](https://git-scm.com/download/win)
 - [Python 3.12](https://www.python.org/downloads/)
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 Durante la instalación de Python, marca **Add python.exe to PATH**. Después, abre una nueva ventana de PowerShell.
 
 ## 2. Instalar LSEG Workspace Desktop
 
-Descarga Workspace desde la [página oficial de LSEG](https://www.lseg.com/en/data-analytics/products/workspace/download-workspace). La aplicación de escritorio es necesaria para este proyecto porque la extracción utiliza su API local.
+Descarga Workspace desde la [página oficial de LSEG](https://www.lseg.com/en/data-analytics/products/workspace/download-workspace). La aplicación de escritorio es necesaria porque este proyecto utiliza su API local.
 
 ### macOS
 
@@ -166,21 +155,21 @@ Descarga Workspace desde la [página oficial de LSEG](https://www.lseg.com/en/da
 5. Inicia sesión con tus credenciales de LSEG.
 6. Abre una pantalla que muestre datos de mercado.
 
-Deja Workspace abierto y autenticado. El script no puede consultar datos si la aplicación está cerrada o si la cuenta está desconectada.
+Deja Workspace abierto y autenticado mientras utilizas el dashboard, la API o los comandos CLI.
 
 ## 3. Obtener el App Key
 
-El App Key identifica a esta aplicación. No es la contraseña de Workspace. Para este proyecto, el key debe estar registrado para **Eikon Data API** y **EDP API**.
+El App Key identifica a esta aplicación. No es la contraseña de Workspace. Para este proyecto, registra el key para **Eikon Data API** y **EDP API**. El proxy de escritorio valida el registro de Eikon o Workspace, mientras que los recursos de precios de LSEG requieren permisos de EDP.
 
 ### Usar un App Key existente de UCEMA
 
-La cuenta de UCEMA ya tiene varios App Keys. Utiliza uno existente en lugar de crear otro:
+La cuenta de UCEMA ya tiene varios App Keys. Utiliza uno existente:
 
 1. Abre **AppKey Generator**.
 2. Revisa los keys registrados para la cuenta de UCEMA.
 3. Selecciona un key registrado para **Eikon Data API** y **EDP API**.
 4. Copia su valor de **API Key**.
-5. Guárdalo en `.env` durante el paso 5.
+5. Guárdalo en `.env` durante el paso 6.
 
 El App Key identifica la aplicación, pero no otorga permisos sobre los datos por sí solo. La cuenta de Workspace también debe tener autorización para acceder a los instrumentos y campos solicitados.
 
@@ -199,7 +188,7 @@ Si AppKey Generator no está disponible, solicita al equipo de soporte de LSEG q
 
 ## 4. Clonar el repositorio
 
-Si todavía no tienes una copia local, abre una terminal y ejecuta:
+Si todavía no tienes una copia local:
 
 ```bash
 git clone https://github.com/AleNavarini/financial-engineering.git
@@ -212,106 +201,67 @@ Si ya tienes el proyecto, entra en su directorio:
 cd financial-engineering
 ```
 
-Confirma que estás en la raíz del proyecto. Debes ver `pyproject.toml`, `fetch_data.py` y la carpeta `src`.
+Confirma que estás en la raíz del proyecto. Debes ver `pyproject.toml`, `Makefile`, `run.ps1`, `frontend` y `src`.
 
-## 5. Crear y activar el entorno virtual
+## 5. Configurar el entorno Python
 
-El entorno virtual mantiene las dependencias aisladas del resto de Python instalado en el equipo.
+El proyecto utiliza `pyproject.toml` como fuente de dependencias y `.venv` como entorno aislado. Los comandos de ejecución crean el entorno automáticamente.
 
-### macOS
+### macOS con Make
 
-Desde la raíz del proyecto:
-
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-```
-
-Comprueba que el entorno está activo:
+Para crear el entorno e instalar las dependencias sin iniciar el servicio:
 
 ```bash
-python --version
-which python
+make install
 ```
 
-La ruta de `which python` debe apuntar a `.venv/bin/python`.
+Comprueba que Python y las dependencias se pueden importar:
+
+```bash
+.venv/bin/python -c "import fastapi, lseg.data, dotenv; print('Dependencias instaladas correctamente')"
+```
 
 ### Windows PowerShell
 
-Desde la raíz del proyecto:
+`run.ps1` crea `.venv` e instala el proyecto automáticamente. Para preparar el entorno sin iniciar la API:
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\python.exe -m pip install -e .
 ```
 
-Comprueba que el entorno está activo:
+Comprueba la instalación:
 
 ```powershell
-python --version
-Get-Command python
+.\.venv\Scripts\python.exe -c "import fastapi, lseg.data, dotenv; print('Dependencias instaladas correctamente')"
 ```
 
-La ruta mostrada debe apuntar a `.venv\Scripts\python.exe`.
+### Alternativa moderna con `uv`
 
-Si PowerShell bloquea la activación, permite scripts solamente en la terminal actual y vuelve a activar el entorno:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
-```
-
-El prompt normalmente muestra `(.venv)` mientras el entorno está activo.
-
-### Alternativa con `uv`
-
-Si instalaste `uv`, puedes crear el mismo entorno con:
+Desde la raíz del proyecto:
 
 ```bash
 uv venv --python 3.12
+uv pip install -e .
 ```
 
-Si Python 3.12 todavía no está instalado, `uv` puede instalarlo por ti:
+Si Python 3.12 no está instalado, `uv` puede instalarlo:
 
 ```bash
 uv python install 3.12
 uv venv --python 3.12
-```
-
-Activa `.venv` usando los comandos de macOS o Windows de este paso.
-
-## 6. Instalar las dependencias
-
-Ejecuta estos comandos con `(.venv)` activo:
-
-```bash
-python -m pip install --upgrade pip
-python -m pip install -e .
-```
-
-Con `uv`, puedes instalar las dependencias sin salir del entorno virtual con:
-
-```bash
 uv pip install -e .
 ```
 
-Ambos métodos leen `pyproject.toml`. Elige un método y úsalo de forma consistente en el mismo entorno.
-
-El parámetro `-e .` instala el proyecto en modo editable y utiliza la configuración de `pyproject.toml`. Se instalan:
-
-- `lseg-data`, la biblioteca de datos de LSEG para Python
-- `python-dotenv`, que carga las variables de `.env`
-- Este proyecto como paquete local editable
-
-Comprueba que la instalación básica funciona:
+Puedes ejecutar el servicio sin activar manualmente el entorno:
 
 ```bash
-python -c "import lseg.data, dotenv; print('Dependencias instaladas correctamente')"
+uv run python -m financial_engineering.app
 ```
 
-Si el comando imprime el mensaje esperado, Python puede importar las dependencias. Esta comprobación no consulta LSEG y no requiere que Workspace esté abierto.
+Para usar un lockfile reproducible, ejecuta `uv sync`. Si generas `uv.lock` para el proyecto, debes versionarlo junto con el cambio de dependencias.
 
-## 7. Configurar las credenciales
+## 6. Configurar las credenciales
 
 Desde la raíz del proyecto, crea `.env` a partir de la plantilla.
 
@@ -333,101 +283,135 @@ Edita `.env` y reemplaza el valor de ejemplo:
 LSEG_APP_KEY=TU_APP_KEY
 ```
 
-También puedes crear el archivo manualmente, siempre que se encuentre en la raíz del proyecto y tenga exactamente la variable `LSEG_APP_KEY`.
+El archivo debe estar en la raíz del proyecto. No agregues comillas, espacios ni comentarios al valor del key.
 
-No agregues comillas, espacios ni comentarios al valor del key. Nunca subas `.env` al repositorio ni guardes credenciales en el código fuente.
+Nunca subas `.env` al repositorio ni guardes credenciales en el código fuente.
 
-## 8. Ejecutar la extracción histórica
+## 7. Ejecutar la API y el dashboard
 
-Antes de ejecutar el script, confirma lo siguiente:
-
-1. Workspace Desktop está abierto.
-2. La cuenta está autenticada.
-3. Workspace muestra datos de mercado.
-4. El entorno virtual está activo.
-5. `.env` contiene un App Key válido.
+Antes de iniciar el servicio, confirma que Workspace Desktop está abierto, autenticado y mostrando datos.
 
 ### macOS
 
 ```bash
-source .venv/bin/activate
-python fetch_data.py
+make run
 ```
+
+`make run` crea `.venv` si hace falta, instala el paquete y ejecuta la API y el dashboard desde un solo proceso. Si cambia `pyproject.toml`, vuelve a instalar las dependencias.
 
 ### Windows PowerShell
 
 ```powershell
-.\.venv\Scripts\Activate.ps1
-python fetch_data.py
+.\run.ps1
 ```
 
-La configuración predeterminada solicita:
+`run.ps1` crea `.venv`, instala el proyecto cuando es necesario y ejecuta la API. No se necesita Node.js, Bun ni una compilación separada del frontend.
 
-- Los RIC `VXc1` a `VXc9`
-- Tres años de historia diaria
-- `TRDPRC_1`, `SETTLE` y `OPINT_1`
+El servicio escucha en `http://127.0.0.1:8000` por defecto. Abre esa dirección para utilizar el dashboard. Para detenerlo, presiona `Ctrl-C` en la terminal.
 
-El resultado se guarda en:
+Puedes cambiar la dirección, el puerto y la carpeta de datos mediante variables de entorno:
+
+```bash
+API_HOST=127.0.0.1 API_PORT=8000 DATA_DIR=data make run
+```
+
+El dashboard permite:
+
+- Consultar datos históricos para uno o varios tickers
+- Consultar una observación actual
+- Explorar los CSV disponibles en `DATA_DIR`
+- Descargar los archivos originales
+- Inspeccionar filas paginadas
+- Graficar las columnas numéricas detectadas
+
+## 8. Usar la API
+
+La documentación interactiva está disponible en `http://127.0.0.1:8000/docs`.
+
+Comprueba el servicio sin contactar a LSEG:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Solicita datos históricos con fechas explícitas:
+
+```bash
+curl -X POST http://127.0.0.1:8000/history \
+  -H 'Content-Type: application/json' \
+  -d '{"instruments":["VXc1","VXc2"],"start":"2024-01-01","end":"2024-12-31"}'
+```
+
+Solicita una observación actual:
+
+```bash
+curl -X POST http://127.0.0.1:8000/data \
+  -H 'Content-Type: application/json' \
+  -d '{"instruments":["VXc1","VXc2"]}'
+```
+
+La API expone estas rutas:
+
+- `POST /history` acepta un `ticker` o una lista de `instruments`, además de `start` y `end` obligatorios.
+- `POST /data` acepta un `ticker` o una lista de `instruments` para un snapshot actual.
+- `GET /datasets` lista los CSV válidos de `DATA_DIR`.
+- `GET /datasets/{name}` devuelve columnas normalizadas, tipos detectados, metadatos y filas.
+- `GET /datasets/{name}/download` descarga el CSV original.
+
+Cada extracción histórica guarda el rango de fechas en el nombre del archivo. Por ejemplo:
 
 ```text
-data/vix_futures_3y.csv
+data/data_VXc1_VXc2_2024-01-01_to_2024-12-31.csv
 ```
 
-El script muestra en la terminal la cantidad de filas guardadas. El directorio `data/` y los CSV generados están excluidos de Git.
+La respuesta incluye los instrumentos resueltos, las fechas solicitadas, la cantidad de filas y la ruta `output_file`.
 
-## 9. Usar el comando CLI
+## 9. Usar los comandos CLI
 
-La instalación también registra el comando `refinitiv-extract`. Puedes consultar sus opciones con:
+Los mismos casos de uso están disponibles como comandos Python instalados por el proyecto.
+
+Extracción histórica:
 
 ```bash
-refinitiv-extract --help
+get-history \
+  --ticker VXc1 \
+  --start 2024-01-01 \
+  --end 2024-12-31
 ```
 
-El CLI sirve para ejecutar consultas diferentes sin modificar `fetch_data.py`. Por ejemplo, para extraer historia de dos instrumentos:
+Snapshot actual:
 
 ```bash
-refinitiv-extract \
-  --mode history \
-  --instruments VXc1,VXc2 \
-  --fields TRDPRC_1,SETTLE,OPINT_1 \
-  --start 2023-01-01 \
-  --end 2023-12-31 \
-  --output data/vix_futures_2023.csv
+get-data --ticker VXc1
 ```
 
-En Windows PowerShell, puedes escribir el comando en una sola línea:
-
-```powershell
-refinitiv-extract --mode history --instruments VXc1,VXc2 --fields TRDPRC_1,SETTLE,OPINT_1 --start 2023-01-01 --end 2023-12-31 --output data/vix_futures_2023.csv
-```
-
-El CLI requiere `--start` cuando `--mode history` está activo. Para el modo `snapshot`, usa por ejemplo:
+También puedes ejecutar los módulos directamente:
 
 ```bash
-refinitiv-extract \
-  --mode snapshot \
-  --instruments VXc1,VXc2 \
-  --fields BID,ASK,TRDPRC_1,SETTLE,OPINT_1 \
-  --output data/vix_futures_current.csv
+python -m financial_engineering.application.use_cases.get_history.get_history_controller \
+  --ticker VXc1 \
+  --start 2024-01-01 \
+  --end 2024-12-31
+
+python -m financial_engineering.application.use_cases.get_data.get_data_controller \
+  --ticker VXc1
 ```
 
-El modo snapshot no es necesario para el estudio histórico. Cuando el mercado está cerrado, `BID` y `ASK` pueden estar vacíos, mientras que el último precio, la liquidación y el interés abierto pueden conservar los últimos valores disponibles.
+Para usar una lista de instrumentos, reemplaza `--ticker VXc1` por `--instruments VXc1,VXc2`.
 
 ## Alcance y limitaciones de los datos
 
-Los RIC de continuación mantienen una posición de vencimiento estable: `VXc1` es el contrato más cercano, `VXc2` es el segundo y así sucesivamente. El contrato detrás de cada columna cambia cuando vencen los contratos.
+El histórico utiliza `ld.get_history` y el snapshot utiliza `ld.get_data` mediante la sesión de escritorio. El proyecto no utiliza el endpoint explícito `ld.content.pricing.Definition(...).get_data()` porque esta cuenta no tiene el permiso `trapi.data.pricing.read`.
 
-Por este motivo, los datos son adecuados para analizar la estructura temporal y los regímenes de volatilidad. No representan por sí solos una serie de retornos de una estrategia negociable de futuros.
+Los valores de `BID` y `ASK` pueden estar vacíos cuando el mercado está cerrado. El último precio, la liquidación y el interés abierto pueden conservar los últimos valores disponibles.
 
 El script encuentra automáticamente el proxy de Workspace Desktop Data API en los puertos `9000` a `9060`. No es necesario configurar el puerto manualmente.
-
-El flujo histórico utiliza `ld.get_history`. El flujo snapshot utiliza `ld.get_data` mediante la sesión de escritorio disponible. El proyecto no utiliza el endpoint explícito `ld.content.pricing.Definition(...).get_data()` porque esta cuenta no tiene el permiso `trapi.data.pricing.read`.
 
 ## Solución de problemas
 
 ### `python` o `python3.12` no existe
 
-Comprueba que Python 3.12 está instalado y que el comando está disponible:
+Comprueba la instalación:
 
 ```bash
 python3.12 --version
@@ -443,17 +427,23 @@ Si el comando no funciona, instala Python siguiendo el paso 1 y abre una nueva t
 
 ### `ModuleNotFoundError`
 
-Activa el entorno virtual y reinstala el proyecto:
+Reinstala el proyecto dentro de `.venv`.
+
+En macOS:
 
 ```bash
-python -m pip install -e .
+make install
 ```
 
-Si la terminal no reconoce `python`, activa `.venv` de nuevo.
+En Windows:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -e .
+```
 
 ### Workspace está cerrado o desconectado
 
-Abre la aplicación instalada de Workspace Desktop, inicia sesión y confirma que muestra datos de mercado. El acceso desde el navegador no reemplaza la sesión de escritorio.
+Abre Workspace Desktop, inicia sesión y confirma que muestra datos de mercado. El acceso desde el navegador no reemplaza la sesión de escritorio.
 
 ### `500 Network Error` o timeout
 
@@ -477,7 +467,7 @@ Puedes consultar manualmente el estado de un puerto, por ejemplo:
 curl http://127.0.0.1:9002/api/status
 ```
 
-Workspace normalmente comienza en el puerto `9000`, pero puede elegir un puerto posterior si otro proceso ya utiliza ese puerto. Un proxy disponible devuelve una respuesta que contiene `ST_PROXY_READY`. El script prueba automáticamente todos los puertos de `9000` a `9060`.
+Workspace normalmente comienza en el puerto `9000`, pero puede elegir un puerto posterior si otro proceso ya utiliza ese puerto. Un proxy disponible devuelve una respuesta que contiene `ST_PROXY_READY`.
 
 ### `403` o `trapi.data.pricing.read`
 
@@ -485,11 +475,11 @@ El endpoint de snapshot explícito de la plataforma requiere `trapi.data.pricing
 
 ### Error de permisos al activar PowerShell
 
-Ejecuta lo siguiente en la terminal actual y vuelve a activar el entorno:
+Ejecuta lo siguiente en la terminal actual y vuelve a iniciar `run.ps1`:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\.venv\Scripts\Activate.ps1
+.\run.ps1
 ```
 
 ### Errores de Python o pandas
@@ -500,10 +490,7 @@ En macOS:
 
 ```bash
 rm -rf .venv
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
+make install
 ```
 
 En Windows PowerShell:
@@ -511,9 +498,7 @@ En Windows PowerShell:
 ```powershell
 Remove-Item -Recurse -Force .venv
 py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e .
+.\.venv\Scripts\python.exe -m pip install -e .
 ```
 
 ## Estructura del proyecto
@@ -522,10 +507,12 @@ python -m pip install -e .
 financial-engineering/
 ├── data/                         # CSV generados, excluidos de Git
 ├── docs/                         # Guías de conceptos y metodología
-├── src/financial_engineering/    # Lógica de extracción y cliente LSEG
+├── frontend/                     # HTML, CSS y JavaScript del dashboard
+├── src/financial_engineering/    # API, casos de uso e infraestructura LSEG
 ├── .env.example                  # Plantilla de configuración
-├── fetch_data.py                 # Flujo principal del estudio
-└── pyproject.toml                # Dependencias y comando CLI
+├── Makefile                      # Instalación, ejecución y tests
+├── run.ps1                       # Lanzador para Windows
+└── pyproject.toml                # Dependencias y comandos CLI
 ```
 
 ## Seguridad
