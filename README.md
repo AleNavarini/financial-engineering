@@ -118,6 +118,8 @@ Cuando el programa esté listo, abrir el siguiente enlace en el navegador:
 
 Esta dirección apunta al programa que se está ejecutando en tu propia computadora. Para que el dashboard funcione, LSEG Workspace debe permanecer abierto y con la sesión iniciada.
 
+![Dashboard de Financial Engineering](dashboard.png)
+
 ## Detener el programa
 
 Para cerrar el programa, volver a la ventana negra que se abrió al ejecutar `start.cmd` y presionar `Ctrl + C`. Se puede cerrar LSEG Workspace después de detener el programa.
