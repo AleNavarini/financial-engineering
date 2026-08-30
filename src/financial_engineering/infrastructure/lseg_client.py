@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 import re
@@ -15,6 +16,11 @@ from urllib.request import urlopen
 from fastapi import HTTPException
 import lseg.data as ld
 
+from financial_engineering.infrastructure.logging_config import redact_message
+
+
+logger = logging.getLogger(__name__)
+
 
 WORKSPACE_PROXY_PORTS = range(9000, 9061)
 DEFAULT_HISTORY_FIELDS = ['TRDPRC_1', 'SETTLE', 'OPINT_1']
@@ -28,12 +34,14 @@ def find_workspace_proxy_port() -> int:
             with urlopen(f'http://127.0.0.1:{port}/api/status', timeout=0.25) as response:
                 status = json.load(response)
                 if status.get('statusCode') == 'ST_PROXY_READY':
+                    logger.info('Found Workspace Desktop proxy on port %s', port)
                     return port
         except (OSError, URLError, TimeoutError, json.JSONDecodeError):
             continue
 
     raise RuntimeError(
-        'Workspace Desktop Data API proxy is not ready on ports 9000 through 9060'
+        'Workspace Desktop Data API proxy is not ready on ports 9000 through 9060. '
+        'Make sure LSEG Workspace is open and logged in.'
     )
 
 
@@ -139,6 +147,15 @@ class LsegClient:
         session = ld.session.desktop.Definition(app_key=app_key).get_session()
         session.set_port_number(find_workspace_proxy_port())
 
+        logger.info(
+            'Opening LSEG session mode=%s instruments=%s fields=%s interval=%s start=%s end=%s',
+            mode,
+            list(instruments),
+            list(fields),
+            interval,
+            start,
+            end,
+        )
         session.open()
         try:
             ld.session.set_default(session)
@@ -160,12 +177,26 @@ class LsegClient:
                     fields=list(fields),
                 )
 
+            logger.info(
+                'LSEG request succeeded mode=%s instruments=%s rows=%s',
+                mode,
+                instrument_list,
+                len(data),
+            )
+
             if output is not None:
                 output.parent.mkdir(parents=True, exist_ok=True)
                 data.to_csv(output)
             return data
         finally:
             request_failed = sys.exc_info()[0] is not None
+            if request_failed:
+                logger.exception(
+                    'LSEG request failed mode=%s instruments=%s fields=%s',
+                    mode,
+                    list(instruments),
+                    list(fields),
+                )
             try:
                 session.close()
             except Exception:
@@ -208,7 +239,21 @@ class LsegClient:
                     interval=interval,
                 )
         except Exception as error:
-            raise HTTPException(status_code=502, detail='LSEG data request failed') from error
+            logger.exception(
+                'Bad gateway for LSEG request mode=%s instruments=%s fields=%s '
+                'start=%s end=%s interval=%s output=%s',
+                mode,
+                resolved_instruments,
+                resolved_fields,
+                start_value,
+                end_value,
+                interval,
+                output,
+            )
+            raise HTTPException(
+                status_code=502,
+                detail=f'LSEG data request failed: {redact_message(str(error))}',
+            ) from error
 
         return {
             'mode': mode,

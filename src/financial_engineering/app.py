@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import logging
 import os
+import time
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -18,6 +20,10 @@ from financial_engineering.application.use_cases.get_data.get_data_controller im
 from financial_engineering.application.use_cases.get_history.get_history_controller import (
     router as history_router,
 )
+from financial_engineering.infrastructure.logging_config import setup_logging
+
+
+logger = logging.getLogger('financial_engineering.api')
 
 
 app = FastAPI(
@@ -31,6 +37,27 @@ app.include_router(datasets_router)
 
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / 'frontend'
 load_dotenv(Path(__file__).resolve().parents[2] / '.env')
+
+
+@app.middleware('http')
+async def request_logging(request: Request, call_next) -> Any:
+    started = time.perf_counter()
+    method = request.method
+    path = request.url.path
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception('Unhandled error while serving %s %s', method, path)
+        raise
+    duration_ms = (time.perf_counter() - started) * 1000
+    logger.info(
+        '%s %s -> %s (%.1f ms)',
+        method,
+        path,
+        response.status_code,
+        duration_ms,
+    )
+    return response
 
 
 @app.get('/', response_model=None)
@@ -53,6 +80,13 @@ def health() -> dict[str, str]:
 
 def main() -> None:
     import uvicorn
+
+    setup_logging()
+    logger.info(
+        'Starting Financial Engineering API on %s:%s',
+        os.getenv('API_HOST', '127.0.0.1'),
+        os.getenv('API_PORT', '8000'),
+    )
 
     uvicorn.run(
         'financial_engineering.app:app',

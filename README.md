@@ -126,6 +126,20 @@ Para cerrar el programa, volver a la ventana negra que se abrió al ejecutar `st
 
 ## Cómo funciona
 
+### Registro de errores (logs)
+
+Si una consulta falla, el dashboard muestra ahora el motivo junto al mensaje `LSEG data request failed: ...`.
+
+Además, el programa guarda un log detallado con el rastreo completo del error en la carpeta `logs/app.log` dentro de `financial-engineering`. Allí se puede ver si el problema fue, por ejemplo, el proxy de Workspace, la autenticación del App Key o el instrumento consultado.
+
+La configuración permite ajustar el registro mediante variables de entorno:
+
+- `LOG_LEVEL`: nivel de detalle en la consola (por ejemplo `DEBUG`, `INFO`, `WARNING`). Por defecto `INFO`.
+- `LOG_DIR`: carpeta donde se guarda el log. Por defecto `logs`.
+- `LOG_MAX_BYTES` y `LOG_BACKUP_COUNT`: tamaño máximo y cantidad de archivos rotados de `app.log`.
+
+El App Key nunca se escribe en los logs: se reemplaza automáticamente por `***`.
+
 ### Librería LSEG Data
 
 El proyecto utiliza la librería oficial **LSEG Data for Python**. Esta librería permite que una aplicación escrita en Python consulte información de instrumentos financieros disponibles en LSEG Workspace.
