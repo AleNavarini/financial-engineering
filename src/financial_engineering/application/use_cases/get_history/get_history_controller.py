@@ -17,6 +17,7 @@ from financial_engineering.application.cli_support import (
 from financial_engineering.application.use_cases.get_history.get_history_use_case import (
     GetHistoryUseCase,
 )
+from financial_engineering.infrastructure.logging_config import setup_logging
 
 
 router = APIRouter(tags=['history'])
@@ -58,6 +59,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    setup_logging()
     load_dotenv()
     parser = build_cli_parser()
     args = parser.parse_args(argv)

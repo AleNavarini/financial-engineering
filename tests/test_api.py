@@ -77,7 +77,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(response['ticker'], 'VXc1')
         self.assertEqual(
             response['output_file'],
-            'data/data_VXc1_2024-01-01_to_2024-12-31.csv',
+            str(Path('data/data_VXc1_2024-01-01_to_2024-12-31.csv')),
         )
 
     def test_data_controller_requests_snapshot_without_history_dates(self):

@@ -35,7 +35,7 @@ Python es el programa que permite ejecutar esta herramienta.
 
 > **Importante:** se debe instalar Python de **64 bits**. El proyecto fue probado con Python 3.12 de 64 bits. Es posible que versiones posteriores a Python 3.12 también funcionen, pero todavía no han sido comprobadas.
 
-1. Descargar e instalar [Python 3.12.9](https://www.python.org/ftp/python/3.12.9/python-3.12.9.exe).
+1. Descargar e instalar [Python 3.12.9](https://www.python.org/ftp/python/3.12.10/python-3.12.10-amd64.exe).
 2. En la primera pantalla del instalador, marcar la opción **Add python.exe to PATH**.
 3. Hacer clic en **Install Now**.
 4. Esperar a que finalice la instalación y cerrar el instalador.
@@ -125,6 +125,20 @@ Esta dirección apunta al programa que se está ejecutando en tu propia computad
 Para cerrar el programa, volver a la ventana negra que se abrió al ejecutar `start.cmd` y presionar `Ctrl + C`. Se puede cerrar LSEG Workspace después de detener el programa.
 
 ## Cómo funciona
+
+### Registro de errores (logs)
+
+Si una consulta falla, el dashboard muestra ahora el motivo junto al mensaje `LSEG data request failed: ...`.
+
+Además, el programa guarda un log detallado con el rastreo completo del error en la carpeta `logs/app.log` dentro de `financial-engineering`. Allí se puede ver si el problema fue, por ejemplo, el proxy de Workspace, la autenticación del App Key o el instrumento consultado.
+
+La configuración permite ajustar el registro mediante variables de entorno:
+
+- `LOG_LEVEL`: nivel de detalle en la consola (por ejemplo `DEBUG`, `INFO`, `WARNING`). Por defecto `INFO`.
+- `LOG_DIR`: carpeta donde se guarda el log. Por defecto `logs`.
+- `LOG_MAX_BYTES` y `LOG_BACKUP_COUNT`: tamaño máximo y cantidad de archivos rotados de `app.log`.
+
+El App Key nunca se escribe en los logs: se reemplaza automáticamente por `***`.
 
 ### Librería LSEG Data
 
