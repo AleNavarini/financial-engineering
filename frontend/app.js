@@ -31,6 +31,13 @@ const state = {
   fields: DEFAULT_FIELDS.slice(),
   start: threeYearsAgo(),
   end: today(),
+  source: 'lseg',
+  yahooTicker: '^VIX',
+  yahooStart: threeYearsAgo(),
+  yahooEnd: today(),
+  yahooFetching: false,
+  yahooFetchMessage: '',
+  yahooFetchMessageType: '',
 }
 
 function today() {
@@ -132,6 +139,49 @@ async function submitFetch(event) {
   }
 }
 
+async function submitYahooFetch(event) {
+  event.preventDefault()
+  if (!state.yahooTicker.trim() || !state.yahooStart || !state.yahooEnd) {
+    state.error = 'Agregá un ticker de Yahoo Finance y las dos fechas antes de consultar.'
+    render()
+    return
+  }
+  if (state.yahooStart > state.yahooEnd) {
+    state.error = 'La fecha inicial debe ser anterior a la fecha final.'
+    render()
+    return
+  }
+
+  state.yahooFetching = true
+  state.yahooFetchMessage = 'Conectando con Yahoo Finance...'
+  state.yahooFetchMessageType = 'loading'
+  state.error = ''
+  render()
+
+  try {
+    const result = await requestJson('/yahoo/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ticker: state.yahooTicker.trim(),
+        start: state.yahooStart,
+        end: state.yahooEnd,
+        interval: '1d',
+      }),
+    })
+    state.yahooFetchMessage = `Se guardaron ${result.row_count.toLocaleString()} filas`
+    state.yahooFetchMessageType = 'success'
+    await loadDatasets(result.output_file.split('/').pop())
+  } catch (error) {
+    state.error = error.message
+    state.yahooFetchMessage = `La consulta falló: ${error.message}`
+    state.yahooFetchMessageType = 'error'
+  } finally {
+    state.yahooFetching = false
+    render()
+  }
+}
+
 function render() {
   const app = document.querySelector('#app')
   const dataset = state.dataset
@@ -156,14 +206,11 @@ function render() {
         <aside class="control-column">
           <section class="panel fetch-panel">
             <div class="panel-heading"><div><span class="section-number">01</span><h2>Consultar historia</h2></div>${slidersIcon()}</div>
-            <p class="panel-note">Elegí los instrumentos, campos y período que querés solicitar a LSEG Workspace.</p>
-            <form id="fetch-form">
-              ${instrumentPicker()}
-              ${fieldPicker()}
-              <div class="date-grid"><label class="field-label">Fecha inicial<input id="start-date" type="date" value="${escapeHtml(state.start)}"></label><label class="field-label">Fecha final<input id="end-date" type="date" value="${escapeHtml(state.end)}"></label></div>
-              <button class="primary-button" type="submit" ${state.fetching ? 'disabled' : ''}>${state.fetching ? loaderIcon() : plusIcon()}${state.fetching ? 'Consultando datos...' : 'Consultar datos'}</button>
-              ${state.fetchMessage ? `<p class="fetch-message ${state.fetchMessageType}">${state.fetchMessageType === 'error' ? alertIcon() : checkIcon()}${escapeHtml(state.fetchMessage)}</p>` : ''}
-            </form>
+            <div class="source-tabs">
+              <button type="button" class="source-tab ${state.source === 'lseg' ? 'active' : ''}" data-action="tab-lseg">LSEG Workspace</button>
+              <button type="button" class="source-tab ${state.source === 'yahoo' ? 'active' : ''}" data-action="tab-yahoo">Yahoo Finance</button>
+            </div>
+            ${state.source === 'lseg' ? lsegForm() : yahooForm()}
           </section>
           <section class="panel tips-panel"><div class="tips-icon">${databaseIcon()}</div><div><strong>Datos locales</strong><p>Los archivos permanecen en tu <code>DATA_DIR</code>. Repetir una consulta actualiza el mismo CSV.</p></div></section>
         </aside>
@@ -176,6 +223,28 @@ function render() {
     <footer><span>Ingeniería Financiera · UCEMA</span><span>Responsables: Alejandro Navarini y Tomas Perez</span></footer>
   </div>`
   bindEvents()
+}
+
+function lsegForm() {
+  return `<p class="panel-note">Elegí los instrumentos, campos y período que querés solicitar a LSEG Workspace.</p>
+    <form id="fetch-form">
+      ${instrumentPicker()}
+      ${fieldPicker()}
+      <div class="date-grid"><label class="field-label">Fecha inicial<input id="start-date" type="date" value="${escapeHtml(state.start)}"></label><label class="field-label">Fecha final<input id="end-date" type="date" value="${escapeHtml(state.end)}"></label></div>
+      <button class="primary-button" type="submit" ${state.fetching ? 'disabled' : ''}>${state.fetching ? loaderIcon() : plusIcon()}${state.fetching ? 'Consultando datos...' : 'Consultar datos'}</button>
+      ${state.fetchMessage ? `<p class="fetch-message ${state.fetchMessageType}">${state.fetchMessageType === 'error' ? alertIcon() : checkIcon()}${escapeHtml(state.fetchMessage)}</p>` : ''}
+    </form>`
+}
+
+function yahooForm() {
+  return `<p class="panel-note">Consultá un ticker de Yahoo Finance (por ejemplo <code>^VIX</code> o <code>^GSPC</code>) para el período elegido.</p>
+    <form id="yahoo-fetch-form">
+      <label class="field-label" for="yahoo-ticker-input">Ticker</label>
+      <div class="token-field"><div class="token-box"><input id="yahoo-ticker-input" placeholder="^VIX" value="${escapeHtml(state.yahooTicker)}"></div></div>
+      <div class="date-grid"><label class="field-label">Fecha inicial<input id="yahoo-start-date" type="date" value="${escapeHtml(state.yahooStart)}"></label><label class="field-label">Fecha final<input id="yahoo-end-date" type="date" value="${escapeHtml(state.yahooEnd)}"></label></div>
+      <button class="primary-button" type="submit" ${state.yahooFetching ? 'disabled' : ''}>${state.yahooFetching ? loaderIcon() : plusIcon()}${state.yahooFetching ? 'Consultando Yahoo Finance...' : 'Consultar Yahoo Finance'}</button>
+      ${state.yahooFetchMessage ? `<p class="fetch-message ${state.yahooFetchMessageType}">${state.yahooFetchMessageType === 'error' ? alertIcon() : checkIcon()}${escapeHtml(state.yahooFetchMessage)}</p>` : ''}
+    </form>`
 }
 
 function instrumentPicker() {
@@ -254,6 +323,10 @@ function bindEvents() {
   document.querySelector('#fetch-form')?.addEventListener('submit', submitFetch)
   document.querySelector('#start-date')?.addEventListener('change', (event) => { state.start = event.target.value })
   document.querySelector('#end-date')?.addEventListener('change', (event) => { state.end = event.target.value })
+  document.querySelector('#yahoo-fetch-form')?.addEventListener('submit', submitYahooFetch)
+  document.querySelector('#yahoo-ticker-input')?.addEventListener('input', (event) => { state.yahooTicker = event.target.value })
+  document.querySelector('#yahoo-start-date')?.addEventListener('change', (event) => { state.yahooStart = event.target.value })
+  document.querySelector('#yahoo-end-date')?.addEventListener('change', (event) => { state.yahooEnd = event.target.value })
   document.querySelector('#file-search')?.addEventListener('input', (event) => {
     state.fileSearch = event.target.value
     renderDatasetList()
@@ -298,7 +371,9 @@ function handleAction(action) {
   if (action === 'refresh-datasets') loadDatasets()
   if (action === 'previous-page') state.page = Math.max(0, state.page - 1)
   if (action === 'next-page') state.page = Math.min(Math.ceil(state.dataset.rows.length / PAGE_SIZE) - 1, state.page + 1)
-  if (['toggle-fields', 'close-fields', 'dismiss-error', 'previous-page', 'next-page'].includes(action)) render()
+  if (action === 'tab-lseg') state.source = 'lseg'
+  if (action === 'tab-yahoo') state.source = 'yahoo'
+  if (['toggle-fields', 'close-fields', 'dismiss-error', 'previous-page', 'next-page', 'tab-lseg', 'tab-yahoo'].includes(action)) render()
 }
 
 function addInstrument(value) {

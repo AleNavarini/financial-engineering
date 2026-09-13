@@ -12,9 +12,8 @@ from typing import Any, Sequence
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from fastapi import HTTPException
 import lseg.data as ld
-
+from fastapi import HTTPException
 
 WORKSPACE_PROXY_PORTS = range(9000, 9061)
 DEFAULT_HISTORY_FIELDS = ['TRDPRC_1', 'SETTLE', 'OPINT_1']

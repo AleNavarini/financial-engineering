@@ -18,15 +18,19 @@ from financial_engineering.application.use_cases.get_data.get_data_controller im
 from financial_engineering.application.use_cases.get_history.get_history_controller import (
     router as history_router,
 )
+from financial_engineering.application.use_cases.get_yahoo_history.get_yahoo_history_controller import (
+    router as yahoo_history_router,
+)
 
 
 app = FastAPI(
     title='Financial Engineering Data API',
-    description='HTTP access to the LSEG data extraction workflow.',
+    description='HTTP access to the LSEG and Yahoo Finance data extraction workflow.',
     version='0.1.0',
 )
 app.include_router(data_router)
 app.include_router(history_router)
+app.include_router(yahoo_history_router)
 app.include_router(datasets_router)
 
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / 'frontend'
@@ -43,6 +47,7 @@ def root() -> Any:
         'health': '/health',
         'data': '/data',
         'history': '/history',
+        'yahoo_history': '/yahoo/history',
     }
 
 
