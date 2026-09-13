@@ -218,3 +218,11 @@ El modelo de la Sección 3.3, en su conjunto, no es estadísticamente significat
 Más importante todavía: la precisión predictiva fuera de muestra del modelo (56.2%) es menor que la del baseline ingenuo de predecir siempre "no va a haber estrés" (57.1%). El modelo, en la práctica, no aporta ninguna capacidad de clasificación por encima de no usar ningún modelo. El AUC-ROC de 0.612 —apenas por encima de 0.5, el valor esperado por azar— confirma una capacidad discriminativa débil, y el recall de apenas 24% sobre los casos que sí tuvieron estrés muestra que el modelo pierde la gran mayoría de los episodios que buscaba anticipar.
 
 En conjunto, la evidencia descriptiva de la Sección 3.1 sigue mostrando que el estrés es más frecuente después de una entrada en backwardation que en un día cualquiera. Pero esta sección responde una pregunta distinta y más exigente —¿se puede usar la intensidad de la señal, el nivel de VIX y las condiciones previas del mercado para predecir, caso por caso, si un episodio en particular va a terminar en estrés?— y la respuesta, con esta evidencia, es que no: ni la profundidad de la inversión el día de entrada, ni el nivel de VIX, ni el comportamiento reciente del mercado antes de la señal, permiten anticipar con precisión útil si un episodio de backwardation va a terminar siendo leve o severo. Esto es consistente con el caso ilustrado en la Sección 3.2: la entrada más intensa de toda la muestra (junio de 2020) no fue la que peor terminó — de hecho, ni siquiera activó el indicador de estrés.
+
+---
+
+# 4. Anexos
+
+Repositorio del proyecto: [github.com/AleNavarini/financial-engineering](https://github.com/AleNavarini/financial-engineering)
+
+Tutorial de instalación de la app: [youtube.com/watch?v=bOuTWIGsxME](https://www.youtube.com/watch?v=bOuTWIGsxME)
