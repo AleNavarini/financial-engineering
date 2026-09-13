@@ -226,3 +226,13 @@ En conjunto, la evidencia descriptiva de la Sección 3.1 sigue mostrando que el 
 Repositorio del proyecto: [github.com/AleNavarini/financial-engineering](https://github.com/AleNavarini/financial-engineering)
 
 Tutorial de instalación de la app: [youtube.com/watch?v=bOuTWIGsxME](https://www.youtube.com/watch?v=bOuTWIGsxME)
+
+# 5. Referencias
+
+Cboe Global Markets. (2019). White paper: Cboe Volatility Index.
+
+Fassas, A. P., & Hourvouliades, N. (2019). VIX futures as a market timing indicator. Journal of Risk and Financial Management, 12(3), Article 113.
+
+Whaley, R. E. (2000). The investor fear gauge. The Journal of Portfolio Management, 26(3), 12–17.
+
+Whaley, R. E. (2009). Understanding the VIX. The Journal of Portfolio Management, 35(3), 98–105.
